@@ -151,10 +151,9 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
 
         <button
           onClick={() => setIsSignOutModalOpen(true)}
-          className="btn-pill bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 text-xs font-extrabold shadow-lg border-2 border-red-700 transition-all flex items-center gap-2 shrink-0 cursor-pointer"
+          className="btn-pill bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 text-xs font-extrabold shadow-lg border-2 border-red-700 transition-all shrink-0 cursor-pointer"
         >
-          <LogOut className="w-4 h-4 stroke-[2.5]" />
-          <span>Sign Out Creator</span>
+          Sign Out Creator
         </button>
       </div>
 
@@ -537,10 +536,9 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
               <button
                 onClick={handleConfirmSignOut}
                 disabled={isSigningOut}
-                className="w-full sm:w-1/2 btn-pill bg-red-600 hover:bg-red-700 text-white py-3.5 text-sm font-extrabold shadow-lg border-2 border-red-800 flex items-center justify-center gap-2"
+                className="w-full sm:w-1/2 btn-pill bg-red-600 hover:bg-red-700 text-white py-3.5 text-sm font-extrabold shadow-lg border-2 border-red-800 flex items-center justify-center"
               >
-                <LogOut className="w-4 h-4" />
-                <span>{isSigningOut ? "Signing Out..." : "Sign Out"}</span>
+                {isSigningOut ? "Signing Out..." : "Sign Out"}
               </button>
             </div>
           </div>
