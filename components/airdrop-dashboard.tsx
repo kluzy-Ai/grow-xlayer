@@ -106,15 +106,23 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
   const handleConfirmSignOut = async () => {
     setIsSigningOut(true);
     try {
+      // 1. Clear server-side session cookies
       await signOutCreator();
+      // 2. Clear client-side Supabase session state
       const supabase = createClient();
-      await supabase.auth.signOut();
+      await supabase.auth.signOut({ scope: "global" });
     } catch (err) {
       console.error("Sign out error:", err);
     } finally {
       setIsSigningOut(false);
       setIsSignOutModalOpen(false);
-      window.location.href = "/login";
+      // 3. Clear local storage & session storage
+      if (typeof window !== "undefined") {
+        window.localStorage.clear();
+        window.sessionStorage.clear();
+        // 4. Hard redirect to /login
+        window.location.replace("/login");
+      }
     }
   };
 
@@ -143,9 +151,9 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
 
         <button
           onClick={() => setIsSignOutModalOpen(true)}
-          className="px-4 py-2 rounded-full bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-white text-xs font-bold border border-red-500/30 transition-colors flex items-center gap-1.5"
+          className="btn-pill bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 text-xs font-extrabold shadow-lg border-2 border-red-700 transition-all flex items-center gap-2 shrink-0 cursor-pointer"
         >
-          <LogOut className="w-3.5 h-3.5" />
+          <LogOut className="w-4 h-4 stroke-[2.5]" />
           <span>Sign Out Creator</span>
         </button>
       </div>
