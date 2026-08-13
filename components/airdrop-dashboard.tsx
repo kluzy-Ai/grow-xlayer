@@ -240,22 +240,33 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
               </div>
             )}
 
-            {/* Quick Actions */}
-            <div className="grid grid-cols-2 gap-3 pt-2">
+            {/* Quick Actions Bar (Inspired by Variant 2) */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-2">
               <button
                 onClick={() => setIsCreatorModalOpen(true)}
-                className="btn-pill btn-grow-primary py-3 text-xs font-extrabold text-white flex items-center justify-center gap-1.5 shadow-md"
+                className="btn-pill bg-[#1FAE52] hover:bg-[#199645] text-white py-3 text-xs font-extrabold shadow-md border-2 border-[#15121F] flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-transform hover:scale-105 cursor-pointer"
               >
-                <Plus className="w-4 h-4" />
-                <span>New Campaign</span>
+                <Plus className="w-4 h-4 stroke-[2.5]" />
+                <span>Campaign</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  const el = document.getElementById("ai-command-input");
+                  if (el) el.focus();
+                }}
+                className="btn-pill bg-[#F6C61A] hover:bg-[#e0b216] text-[#15121F] py-3 text-xs font-extrabold shadow-md border-2 border-[#15121F] flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-transform hover:scale-105 cursor-pointer"
+              >
+                <Bot className="w-4 h-4 stroke-[2.5]" />
+                <span>AI Plan</span>
               </button>
 
               <button
                 onClick={() => setIsTelegramSimulatorOpen(true)}
-                className="btn-pill bg-[#7C5CFA] text-white hover:bg-[#6848E4] py-3 text-xs font-extrabold shadow-md flex items-center justify-center gap-1.5"
+                className="btn-pill bg-[#7C5CFA] hover:bg-[#6848E4] text-white py-3 text-xs font-extrabold shadow-md border-2 border-[#15121F] flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-transform hover:scale-105 cursor-pointer"
               >
-                <Send className="w-4 h-4" />
-                <span>Test Telegram Bot</span>
+                <Send className="w-4 h-4 stroke-[2.5]" />
+                <span>Batch Drop</span>
               </button>
             </div>
           </div>
@@ -334,6 +345,7 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
 
                 <form onSubmit={handleAiSubmit} className="space-y-3">
                   <textarea
+                    id="ai-command-input"
                     rows={2}
                     value={aiPrompt}
                     onChange={(e) => setAiPrompt(e.target.value)}
