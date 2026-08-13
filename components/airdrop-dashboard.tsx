@@ -17,7 +17,7 @@ import {
   AlertTriangle,
   X,
   Rocket,
-  CheckCircle2,
+  CheckCircle,
 } from "lucide-react";
 import { useAccount, useBalance, useConnect, useDisconnect } from "wagmi";
 import { formatEther } from "viem";
@@ -169,48 +169,47 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
         </button>
       </div>
 
-      {/* Main Grid: Treasury & Campaign Overview */}
+      {/* Main Layout Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column: X Layer Treasury Card (Variant 2 Neo-Brutalist Layout) */}
+        {/* Left Column: Variant 2 Neo-Brutalist Main Card Container */}
         <div className="lg:col-span-5 space-y-6">
-          <div className="bg-white rounded-[36px] p-6 sm:p-8 border-4 border-[#15121F] shadow-2xl space-y-6">
-            <div className="flex items-center justify-between border-b border-[#15121F]/10 pb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-9 h-9 rounded-2xl bg-[#1FAE52] text-white flex items-center justify-center font-bold shadow-sm">
-                  <Zap className="w-5 h-5 fill-current" />
-                </div>
-                <span className="font-display font-extrabold text-xl text-[#15121F]">
-                  X Layer Treasury
-                </span>
+          <div className="bg-[#B4E23F] rounded-[40px] p-6 sm:p-8 border-4 border-[#15121F] shadow-2xl space-y-6">
+            {/* Card Header */}
+            <div className="flex items-center justify-between">
+              <h2 className="font-display font-extrabold text-2xl text-[#15121F]">
+                {communityName}
+              </h2>
+              <div className="w-9 h-9 rounded-full bg-white text-[#15121F] flex items-center justify-center font-extrabold shadow-sm border border-[#15121F]/20">
+                <Zap className="w-5 h-5 fill-current" />
               </div>
-              <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-[#1FAE52]/10 text-[#1FAE52] border border-[#1FAE52]/20">
-                Chain ID 1952
-              </span>
             </div>
 
-            {/* Treasury Balance Display (Variant 2 Signature Style) */}
-            <div className="bg-[#F4F6F0] rounded-3xl p-6 border-2 border-[#15121F]/10 space-y-4">
+            {/* Inner White Treasury Box (Exact Variant 2 Styling) */}
+            <div className="bg-white rounded-[28px] p-6 border-2 border-[#15121F] shadow-md space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold text-[#15121F]/60 uppercase tracking-wider">
-                  TREASURY BALANCE
+                <span className="text-xs font-bold text-[#15121F]/60">
+                  X Layer Treasury
                 </span>
-                {isConnected ? (
+                <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-[#1FAE52]/10 text-[#1FAE52]">
+                  Chain ID 1952
+                </span>
+              </div>
+
+              <div className="font-display font-extrabold text-3xl sm:text-4xl text-[#15121F]">
+                {treasuryBalance} OKB
+              </div>
+
+              {isConnected ? (
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs font-bold text-[#15121F]/70 truncate max-w-[200px]">
+                    {address}
+                  </span>
                   <button
                     onClick={handleDisconnectWallet}
                     className="text-xs text-red-600 font-bold hover:underline"
                   >
                     Disconnect
                   </button>
-                ) : null}
-              </div>
-
-              <div className="font-display font-extrabold text-3xl sm:text-4xl text-[#15121F] tracking-tight">
-                {treasuryBalance} OKB
-              </div>
-
-              {isConnected ? (
-                <div className="font-mono text-xs font-bold text-[#15121F]/70 bg-white px-3 py-2 rounded-xl border border-[#15121F]/10 truncate">
-                  {address}
                 </div>
               ) : (
                 <button
@@ -221,96 +220,107 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
                       connect({ connector: connectors[0] });
                     }
                   }}
-                  className="w-full btn-pill btn-grow-primary py-3 text-sm font-extrabold text-white flex items-center justify-center gap-2 shadow-lg"
+                  className="w-full btn-pill btn-grow-primary py-2.5 text-xs font-extrabold text-white flex items-center justify-center gap-2 shadow-md"
                 >
                   <Wallet className="w-4 h-4" />
-                  <span>Connect Treasury Wallet</span>
+                  <span>Connect Wallet</span>
                 </button>
               )}
 
-              {/* Telegram Deep Link Copy Bar inside Treasury Card (Variant 2 Mockup) */}
+              {/* Telegram Link Box */}
               {campaign && (
-                <div className="pt-2 border-t border-[#15121F]/10 space-y-2">
-                  <span className="text-[11px] font-bold text-[#15121F]/60 uppercase tracking-wider">
-                    Claim Link:
+                <div className="bg-[#F4F6F0] p-2.5 rounded-2xl border border-[#15121F]/10 flex items-center justify-between gap-2">
+                  <span className="font-mono text-xs text-[#15121F]/70 truncate">
+                    {campaign.telegramLink}
                   </span>
-                  <div className="flex items-center gap-2 bg-white p-1.5 rounded-xl border border-[#15121F]/20">
-                    <input
-                      type="text"
-                      readOnly
-                      value={campaign.telegramLink}
-                      className="w-full text-xs font-mono bg-transparent text-[#15121F] px-2 focus:outline-none truncate"
-                    />
-                    <button
-                      onClick={handleCopyLink}
-                      className="p-2 rounded-lg bg-[#15121F] text-white hover:bg-[#2A2438] shrink-0"
-                    >
-                      {copiedLink ? (
-                        <Check className="w-3.5 h-3.5 text-[#1FAE52]" />
-                      ) : (
-                        <Copy className="w-3.5 h-3.5" />
-                      )}
-                    </button>
-                  </div>
+                  <button
+                    onClick={handleCopyLink}
+                    className="p-1.5 rounded-xl bg-white text-[#15121F] border border-[#15121F]/20 hover:bg-[#15121F] hover:text-white transition-colors"
+                  >
+                    {copiedLink ? (
+                      <Check className="w-3.5 h-3.5 text-[#1FAE52]" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                  </button>
                 </div>
               )}
             </div>
 
-            {/* Tri-Color Action Buttons (Variant 2 Signature Layout) */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-1">
+            {/* Tri-Color Square Action Cards (Exact Variant 2 Mockup) */}
+            <div className="grid grid-cols-3 gap-3">
+              {/* Green Campaign Button */}
               <button
                 onClick={() => setIsCreatorModalOpen(true)}
-                className="btn-pill bg-[#1FAE52] hover:bg-[#199645] text-white py-3.5 px-2 text-xs sm:text-sm font-extrabold shadow-md border-2 border-[#15121F] flex flex-col items-center justify-center gap-1 transition-transform hover:scale-105 cursor-pointer"
+                className="bg-[#1FAE52] hover:bg-[#199645] text-white rounded-[24px] p-4 border-2 border-[#15121F] shadow-md flex flex-col items-center justify-center text-center space-y-2 transition-transform hover:scale-105 cursor-pointer"
               >
-                <Rocket className="w-5 h-5 stroke-[2.5]" />
-                <span>Campaign</span>
+                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                  <Rocket className="w-4 h-4 stroke-[2.5]" />
+                </div>
+                <span className="font-display font-extrabold text-xs leading-tight">
+                  Campaign
+                </span>
               </button>
 
+              {/* Yellow AI Plan Button */}
               <button
                 onClick={() => {
                   const el = document.getElementById("ai-command-input");
                   if (el) el.focus();
                 }}
-                className="btn-pill bg-[#F6C61A] hover:bg-[#e0b216] text-[#15121F] py-3.5 px-2 text-xs sm:text-sm font-extrabold shadow-md border-2 border-[#15121F] flex flex-col items-center justify-center gap-1 transition-transform hover:scale-105 cursor-pointer"
+                className="bg-[#F6C61A] hover:bg-[#e0b216] text-[#15121F] rounded-[24px] p-4 border-2 border-[#15121F] shadow-md flex flex-col items-center justify-center text-center space-y-2 transition-transform hover:scale-105 cursor-pointer"
               >
-                <Bot className="w-5 h-5 stroke-[2.5]" />
-                <span>AI Plan</span>
+                <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center">
+                  <Bot className="w-4 h-4 stroke-[2.5]" />
+                </div>
+                <span className="font-display font-extrabold text-xs leading-tight">
+                  AI Plan
+                </span>
               </button>
 
+              {/* Violet Batch Drop Button */}
               <button
                 onClick={() => setIsTelegramSimulatorOpen(true)}
-                className="btn-pill bg-[#7C5CFA] hover:bg-[#6848E4] text-white py-3.5 px-2 text-xs sm:text-sm font-extrabold shadow-md border-2 border-[#15121F] flex flex-col items-center justify-center gap-1 transition-transform hover:scale-105 cursor-pointer"
+                className="bg-[#7C5CFA] hover:bg-[#6848E4] text-white rounded-[24px] p-4 border-2 border-[#15121F] shadow-md flex flex-col items-center justify-center text-center space-y-2 transition-transform hover:scale-105 cursor-pointer"
               >
-                <Zap className="w-5 h-5 stroke-[2.5]" />
-                <span>Batch Drop</span>
+                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                  <Zap className="w-4 h-4 fill-current" />
+                </div>
+                <span className="font-display font-extrabold text-xs leading-tight">
+                  Batch Drop
+                </span>
               </button>
             </div>
 
-            {/* Recent Batch Drops Card (Variant 2 Feature Box) */}
-            <div className="bg-[#F4F6F0] rounded-3xl p-5 border-2 border-[#15121F]/10 space-y-3">
-              <div className="flex items-center justify-between text-xs font-extrabold text-[#15121F]">
-                <span>Recent Batch Drops</span>
-                <span className="text-[10px] text-[#15121F]/50 font-semibold">Just now</span>
-              </div>
-              <div className="bg-white rounded-2xl p-3 border border-[#15121F]/10 flex items-center justify-between">
+            {/* Bottom White Card: Recent Batch Drops (Exact Variant 2) */}
+            <div className="bg-white rounded-[28px] p-5 border-2 border-[#15121F] shadow-md space-y-3">
+              <span className="font-display font-extrabold text-xs text-[#15121F] uppercase tracking-wider block">
+                Recent Batch Drops
+              </span>
+
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-[#1FAE52] text-white flex items-center justify-center">
-                    <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
+                  <div className="w-9 h-9 rounded-full bg-[#1FAE52] text-white flex items-center justify-center shrink-0">
+                    <CheckCircle className="w-5 h-5 fill-current text-white" />
                   </div>
                   <div>
-                    <div className="font-extrabold text-sm text-[#15121F]">20 Wallets Paid</div>
-                    <div className="text-xs font-medium text-[#15121F]/60">5.0 OKB Total Sent</div>
+                    <div className="font-display font-extrabold text-sm text-[#15121F]">
+                      20 Wallets Paid
+                    </div>
+                    <div className="text-[11px] text-[#15121F]/60 font-medium">
+                      5.0 OKB Sent
+                    </div>
                   </div>
                 </div>
-                <span className="text-xs font-extrabold bg-[#1FAE52]/10 text-[#1FAE52] px-2.5 py-1 rounded-full">
-                  Verified
+                <span className="text-[11px] font-bold text-[#15121F]/40">
+                  Just now
                 </span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right Column: Active Campaign & AI Command Center */}
+        {/* Right Column: Campaign Details & AI Engine */}
         <div className="lg:col-span-7 space-y-6">
           {campaign ? (
             <div className="bg-white rounded-[36px] p-6 sm:p-8 border-4 border-[#15121F] shadow-xl space-y-6">
