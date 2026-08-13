@@ -16,8 +16,12 @@ import {
   ExternalLink,
   AlertTriangle,
   X,
-  Rocket,
-  CheckCircle,
+  TrendingUp,
+  Activity,
+  Layers,
+  Lightbulb,
+  CreditCard,
+  LogOut,
 } from "lucide-react";
 import { useAccount, useBalance, useConnect, useDisconnect } from "wagmi";
 import { formatEther } from "viem";
@@ -60,6 +64,9 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
     "Distribute 0.25 OKB to 20 random eligible wallets"
   );
   const [copiedLink, setCopiedLink] = useState(false);
+  const [activeCampaignFilter, setActiveCampaignFilter] = useState<
+    "liquidity" | "ai" | "batch"
+  >("liquidity");
 
   const treasuryBalance = balanceData
     ? Number(formatEther(balanceData.value)).toFixed(2)
@@ -67,6 +74,9 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
 
   const userEmail = user?.email || "creator@buildx.xyz";
   const communityName = user?.user_metadata?.community_name || "BuildX Guild";
+  const displayAddress = address
+    ? `${address.slice(0, 6)}...${address.slice(-4)}`
+    : "0x9aBc...f34";
 
   const handleCopyLink = () => {
     if (campaign) {
@@ -139,380 +149,270 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-      {/* Top Banner: Creator Security Portal */}
-      <div className="bg-[#15121F] text-white rounded-[32px] p-4 sm:p-6 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 border-2 border-[#15121F]">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-6">
+      {/* 1. TOP NAVBAR / HEADER BAR (Exact Reference Image Style) */}
+      <div className="bg-white rounded-3xl p-4 border-4 border-[#15121F] shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#F6C61A] text-[#15121F] flex items-center justify-center font-bold">
-            <ShieldCheck className="w-5 h-5 stroke-[2.5]" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-display font-extrabold text-base">
-                {communityName} Portal
-              </span>
-              <span className="text-[10px] font-bold bg-[#1FAE52] text-white px-2 py-0.5 rounded-full uppercase tracking-wider">
-                VERIFIED CREATOR
-              </span>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-[#15121F] text-white flex items-center justify-center font-extrabold text-xs">
+              <Layers className="w-4 h-4 text-[#B4E23F]" />
             </div>
-            <p className="text-xs text-white/70 font-medium">
-              Logged in as {userEmail}
-            </p>
+            <span className="font-display font-extrabold text-lg text-[#15121F]">
+              Grow on OKX
+            </span>
           </div>
+          <span className="text-[#15121F]/30 font-bold">|</span>
+          <span className="text-xs font-extrabold text-[#15121F]">
+            X Layer Network
+          </span>
         </div>
 
-        <button
-          onClick={() => setIsSignOutModalOpen(true)}
-          className="btn-pill bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 text-xs font-extrabold shadow-lg border-2 border-red-700 transition-all shrink-0 cursor-pointer"
-        >
-          Sign Out Creator
-        </button>
-      </div>
-
-      {/* Main Layout Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column: Variant 2 Neo-Brutalist Main Card Container */}
-        <div className="lg:col-span-5 space-y-6">
-          <div className="bg-[#B4E23F] rounded-[40px] p-6 sm:p-8 border-4 border-[#15121F] shadow-2xl space-y-6">
-            {/* Card Header */}
-            <div className="flex items-center justify-between">
-              <h2 className="font-display font-extrabold text-2xl text-[#15121F]">
-                {communityName}
-              </h2>
-              <div className="w-9 h-9 rounded-full bg-white text-[#15121F] flex items-center justify-center font-extrabold shadow-sm border border-[#15121F]/20">
-                <Zap className="w-5 h-5 fill-current" />
-              </div>
-            </div>
-
-            {/* Inner White Treasury Box (Exact Variant 2 Styling) */}
-            <div className="bg-white rounded-[28px] p-6 border-2 border-[#15121F] shadow-md space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#15121F]/60">
-                  X Layer Treasury
-                </span>
-                <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-[#1FAE52]/10 text-[#1FAE52]">
-                  Chain ID 1952
-                </span>
-              </div>
-
-              <div className="font-display font-extrabold text-3xl sm:text-4xl text-[#15121F]">
-                {treasuryBalance} OKB
-              </div>
-
-              {isConnected ? (
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs font-bold text-[#15121F]/70 truncate max-w-[200px]">
-                    {address}
-                  </span>
-                  <button
-                    onClick={handleDisconnectWallet}
-                    className="text-xs text-red-600 font-bold hover:underline"
-                  >
-                    Disconnect
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => {
-                    if (connectors.length > 1) {
-                      setIsWalletModalOpen(true);
-                    } else if (connectors[0]) {
-                      connect({ connector: connectors[0] });
-                    }
-                  }}
-                  className="w-full btn-pill btn-grow-primary py-2.5 text-xs font-extrabold text-white flex items-center justify-center gap-2 shadow-md"
-                >
-                  <Wallet className="w-4 h-4" />
-                  <span>Connect Wallet</span>
-                </button>
-              )}
-
-              {/* Telegram Link Box */}
-              {campaign && (
-                <div className="bg-[#F4F6F0] p-2.5 rounded-2xl border border-[#15121F]/10 flex items-center justify-between gap-2">
-                  <span className="font-mono text-xs text-[#15121F]/70 truncate">
-                    {campaign.telegramLink}
-                  </span>
-                  <button
-                    onClick={handleCopyLink}
-                    className="p-1.5 rounded-xl bg-white text-[#15121F] border border-[#15121F]/20 hover:bg-[#15121F] hover:text-white transition-colors"
-                  >
-                    {copiedLink ? (
-                      <Check className="w-3.5 h-3.5 text-[#1FAE52]" />
-                    ) : (
-                      <Copy className="w-3.5 h-3.5" />
-                    )}
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Tri-Color Square Action Cards (Exact Variant 2 Mockup) */}
-            <div className="grid grid-cols-3 gap-3">
-              {/* Green Campaign Button */}
-              <button
-                onClick={() => setIsCreatorModalOpen(true)}
-                className="bg-[#1FAE52] hover:bg-[#199645] text-white rounded-[24px] p-4 border-2 border-[#15121F] shadow-md flex flex-col items-center justify-center text-center space-y-2 transition-transform hover:scale-105 cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                  <Rocket className="w-4 h-4 stroke-[2.5]" />
-                </div>
-                <span className="font-display font-extrabold text-xs leading-tight">
-                  Campaign
-                </span>
-              </button>
-
-              {/* Yellow AI Plan Button */}
-              <button
-                onClick={() => {
-                  const el = document.getElementById("ai-command-input");
-                  if (el) el.focus();
-                }}
-                className="bg-[#F6C61A] hover:bg-[#e0b216] text-[#15121F] rounded-[24px] p-4 border-2 border-[#15121F] shadow-md flex flex-col items-center justify-center text-center space-y-2 transition-transform hover:scale-105 cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center">
-                  <Bot className="w-4 h-4 stroke-[2.5]" />
-                </div>
-                <span className="font-display font-extrabold text-xs leading-tight">
-                  AI Plan
-                </span>
-              </button>
-
-              {/* Violet Batch Drop Button */}
-              <button
-                onClick={() => setIsTelegramSimulatorOpen(true)}
-                className="bg-[#7C5CFA] hover:bg-[#6848E4] text-white rounded-[24px] p-4 border-2 border-[#15121F] shadow-md flex flex-col items-center justify-center text-center space-y-2 transition-transform hover:scale-105 cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                  <Zap className="w-4 h-4 fill-current" />
-                </div>
-                <span className="font-display font-extrabold text-xs leading-tight">
-                  Batch Drop
-                </span>
-              </button>
-            </div>
-
-            {/* Bottom White Card: Recent Batch Drops (Exact Variant 2) */}
-            <div className="bg-white rounded-[28px] p-5 border-2 border-[#15121F] shadow-md space-y-3">
-              <span className="font-display font-extrabold text-xs text-[#15121F] uppercase tracking-wider block">
-                Recent Batch Drops
-              </span>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-[#1FAE52] text-white flex items-center justify-center shrink-0">
-                    <CheckCircle className="w-5 h-5 fill-current text-white" />
-                  </div>
-                  <div>
-                    <div className="font-display font-extrabold text-sm text-[#15121F]">
-                      20 Wallets Paid
-                    </div>
-                    <div className="text-[11px] text-[#15121F]/60 font-medium">
-                      5.0 OKB Sent
-                    </div>
-                  </div>
-                </div>
-                <span className="text-[11px] font-bold text-[#15121F]/40">
-                  Just now
-                </span>
-              </div>
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 bg-[#F4F6F0] px-3 py-1.5 rounded-full border border-[#15121F]/10 text-xs font-bold text-[#15121F]">
+            <User className="w-4 h-4 text-[#7C5CFA]" />
+            <span>User: {displayAddress}</span>
           </div>
-        </div>
 
-        {/* Right Column: Campaign Details & AI Engine */}
-        <div className="lg:col-span-7 space-y-6">
-          {campaign ? (
-            <div className="bg-white rounded-[36px] p-6 sm:p-8 border-4 border-[#15121F] shadow-xl space-y-6">
-              {/* Campaign Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#15121F]/10 pb-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-display font-extrabold text-2xl text-[#15121F]">
-                      {campaign.name}
-                    </h3>
-                    <span className="bg-[#1FAE52]/10 text-[#1FAE52] text-xs px-2.5 py-0.5 rounded-full font-extrabold">
-                      {campaign.status}
-                    </span>
-                  </div>
-                  <p className="text-xs text-[#15121F]/60 font-medium mt-0.5">
-                    Created {campaign.createdAt} • Target: {campaign.maxSpots} Wallets
-                  </p>
-                </div>
-                <div className="text-left sm:text-right">
-                  <div className="text-xs text-[#15121F]/60 font-bold uppercase">
-                    PAYOUT / WALLET
-                  </div>
-                  <div className="font-display font-extrabold text-xl text-[#7C5CFA]">
-                    {campaign.amountPerWallet} {campaign.token}
-                  </div>
-                </div>
-              </div>
-
-              {/* AI Distribution Command Bar */}
-              <div className="bg-[#15121F] rounded-3xl p-5 text-white space-y-4 shadow-lg">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-[#F6C61A] text-[#15121F] flex items-center justify-center font-bold text-xs">
-                    <Bot className="w-4 h-4" />
-                  </div>
-                  <h4 className="font-display font-extrabold text-sm text-white">
-                    AI Distribution Command Engine
-                  </h4>
-                </div>
-
-                <form onSubmit={handleAiSubmit} className="space-y-3">
-                  <textarea
-                    id="ai-command-input"
-                    rows={2}
-                    value={aiPrompt}
-                    onChange={(e) => setAiPrompt(e.target.value)}
-                    className="w-full bg-white/10 border border-white/20 rounded-2xl p-3 text-xs font-medium text-white placeholder-white/40 focus:outline-none focus:border-[#1FAE52]"
-                    placeholder="e.g. Distribute 0.25 OKB to 20 random eligible wallets..."
-                  />
-                  <button
-                    type="submit"
-                    disabled={isAiGenerating}
-                    className="w-full btn-pill bg-[#7C5CFA] hover:bg-[#6848E4] text-white py-3 text-xs font-extrabold flex items-center justify-center gap-2 shadow-lg cursor-pointer"
-                  >
-                    {isAiGenerating ? (
-                      <span>Analyzing & Generating Plan...</span>
-                    ) : (
-                      <>
-                        <span>Generate AI Distribution Plan</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </>
-                    )}
-                  </button>
-                </form>
-
-                {/* AI Plan Preview Box */}
-                {aiPlan && (
-                  <div className="bg-white/10 rounded-2xl p-4 border border-white/15 space-y-3 pt-3">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-[#F6C61A]">
-                        AI Distribution Strategy
-                      </span>
-                      <span className="bg-[#1FAE52] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                        {aiPlan.recipients.length} Wallets Selected
-                      </span>
-                    </div>
-
-                    <p className="text-xs text-white/80 font-medium">
-                      Optimized batch allocation targeting eligible community wallets on X Layer.
-                    </p>
-
-                    <div className="pt-2 flex items-center justify-between border-t border-white/10 text-xs">
-                      <div>
-                        Total Payout:{" "}
-                        <strong className="text-[#F6C61A]">
-                          {aiPlan.totalAmount} OKB
-                        </strong>
-                      </div>
-                      <button
-                        onClick={executeDistribution}
-                        disabled={isDistributing}
-                        className="btn-pill btn-grow-primary px-4 py-2 text-xs font-bold text-white shadow-md flex items-center gap-1.5"
-                      >
-                        {isDistributing ? (
-                          <span>Executing Drop...</span>
-                        ) : (
-                          <>
-                            <Send className="w-3.5 h-3.5" />
-                            <span>Execute Batch Payout</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-
-                    {txHash && (
-                      <div className="p-2 bg-[#1FAE52]/20 rounded-xl text-[11px] text-[#1FAE52] font-mono flex items-center justify-between">
-                        <span>Tx Hash: {txHash.slice(0, 14)}...</span>
-                        <a
-                          href={`https://www.okx.com/explorer/xlayer-test/tx/${txHash}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="underline hover:text-white flex items-center gap-1"
-                        >
-                          View Explorer <ExternalLink className="w-3 h-3" />
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
+          {isConnected ? (
+            <button
+              onClick={handleDisconnectWallet}
+              className="px-4 py-2 rounded-xl bg-white hover:bg-gray-100 text-[#15121F] text-xs font-extrabold border-2 border-[#15121F] transition-all cursor-pointer"
+            >
+              Disconnect
+            </button>
           ) : (
-            <div className="bg-white rounded-[36px] p-8 border-4 border-[#15121F] shadow-xl text-center space-y-4">
-              <h3 className="font-display font-extrabold text-xl text-[#15121F]">
-                No Active Campaign Found
-              </h3>
-              <p className="text-sm text-[#15121F]/70 font-medium max-w-sm mx-auto">
-                Create a campaign to generate your community Telegram claim bot link.
-              </p>
-              <button
-                onClick={() => setIsCreatorModalOpen(true)}
-                className="btn-pill btn-grow-primary px-6 py-3 text-sm font-bold text-white shadow-lg inline-flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Create Campaign Now</span>
-              </button>
-            </div>
+            <button
+              onClick={() => {
+                if (connectors.length > 1) {
+                  setIsWalletModalOpen(true);
+                } else if (connectors[0]) {
+                  connect({ connector: connectors[0] });
+                }
+              }}
+              className="px-4 py-2 rounded-xl bg-white hover:bg-gray-100 text-[#15121F] text-xs font-extrabold border-2 border-[#15121F] transition-all shadow-sm cursor-pointer"
+            >
+              Connect Wallet
+            </button>
           )}
+
+          <button
+            onClick={() => setIsSignOutModalOpen(true)}
+            className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-extrabold border-2 border-red-800 transition-all shadow-sm cursor-pointer"
+          >
+            Sign Out
+          </button>
         </div>
       </div>
 
-      {/* Live Submissions Table */}
-      <div className="bg-white rounded-[36px] p-6 sm:p-8 border-4 border-[#15121F] shadow-xl space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
+      {/* 2. TOP STATS GRID: Treasury, Protocol Health, APY % (Exact Reference Image Style) */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+        {/* X Layer Treasury Card */}
+        <div className="md:col-span-6 bg-white rounded-3xl p-6 border-4 border-[#15121F] shadow-lg flex flex-col justify-between space-y-4">
+          <div className="flex items-center justify-between border-b-2 border-[#15121F]/10 pb-3">
             <h3 className="font-display font-extrabold text-xl text-[#15121F]">
-              Live Community Submissions ({submissions.length})
+              X Layer Treasury
             </h3>
-            <p className="text-xs text-[#15121F]/60 font-medium">
-              Realtime verified wallet submissions from Telegram claim bot.
+            <CreditCard className="w-5 h-5 text-[#15121F]" />
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs font-bold text-[#15121F]">
+              <span>OKB Balance</span>
+              <span className="px-2.5 py-0.5 rounded-full bg-[#15121F] text-white text-[10px] font-extrabold">
+                Chain ID 1952
+              </span>
+            </div>
+            <div className="font-display font-extrabold text-3xl sm:text-4xl text-[#15121F]">
+              {treasuryBalance} OKB
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              onClick={() => setIsCreatorModalOpen(true)}
+              className="px-5 py-2.5 rounded-xl bg-[#15121F] hover:bg-[#2A2438] text-white text-xs font-extrabold transition-all cursor-pointer"
+            >
+              Deposit
+            </button>
+            <button
+              onClick={() => setIsTelegramSimulatorOpen(true)}
+              className="px-5 py-2.5 rounded-xl bg-white hover:bg-gray-100 text-[#15121F] text-xs font-extrabold border-2 border-[#15121F] transition-all cursor-pointer"
+            >
+              Withdraw
+            </button>
+          </div>
+        </div>
+
+        {/* Protocol Health Card */}
+        <div className="md:col-span-3 bg-white rounded-3xl p-6 border-4 border-[#15121F] shadow-lg flex flex-col justify-between space-y-2 text-center md:text-left">
+          <span className="font-display font-extrabold text-sm text-[#15121F]">
+            Protocol Health
+          </span>
+          <div className="font-display font-extrabold text-4xl sm:text-5xl text-[#15121F]">
+            98%
+          </div>
+          <span className="text-[11px] font-bold text-[#1FAE52]">
+            Optimal Performance
+          </span>
+        </div>
+
+        {/* APY % Card */}
+        <div className="md:col-span-3 bg-white rounded-3xl p-6 border-4 border-[#15121F] shadow-lg flex flex-col justify-between space-y-2 text-center md:text-left">
+          <span className="font-display font-extrabold text-sm text-[#15121F]">
+            APY %
+          </span>
+          <div className="font-display font-extrabold text-4xl sm:text-5xl text-[#15121F]">
+            7.8%
+          </div>
+          <span className="text-[11px] font-bold text-[#7C5CFA]">
+            Active OKB Rewards
+          </span>
+        </div>
+      </div>
+
+      {/* 3. ACTIVE CAMPAIGNS SECTION (Exact Reference Image Style) */}
+      <div className="bg-white rounded-3xl p-6 border-4 border-[#15121F] shadow-lg space-y-4">
+        <h3 className="font-display font-extrabold text-xl text-[#15121F]">
+          Active Campaigns
+        </h3>
+
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Green Campaign Pill */}
+          <button
+            onClick={() => setActiveCampaignFilter("liquidity")}
+            className={`px-5 py-3 rounded-full border-2 border-[#15121F] font-extrabold text-xs sm:text-sm flex items-center gap-2.5 transition-transform hover:scale-105 cursor-pointer ${
+              activeCampaignFilter === "liquidity"
+                ? "bg-[#1FAE52] text-[#15121F] shadow-md"
+                : "bg-[#1FAE52]/20 text-[#15121F]"
+            }`}
+          >
+            <div className="w-6 h-6 rounded-full bg-[#15121F] text-white flex items-center justify-center">
+              <TrendingUp className="w-3.5 h-3.5 text-[#1FAE52]" />
+            </div>
+            <span>Campaign: Liquidity Boost</span>
+          </button>
+
+          {/* Yellow Campaign Pill */}
+          <button
+            onClick={() => setActiveCampaignFilter("ai")}
+            className={`px-5 py-3 rounded-full border-2 border-[#15121F] font-extrabold text-xs sm:text-sm flex items-center gap-2.5 transition-transform hover:scale-105 cursor-pointer ${
+              activeCampaignFilter === "ai"
+                ? "bg-[#F6C61A] text-[#15121F] shadow-md"
+                : "bg-[#F6C61A]/20 text-[#15121F]"
+            }`}
+          >
+            <div className="w-6 h-6 rounded-full bg-[#15121F] text-white flex items-center justify-center">
+              <Lightbulb className="w-3.5 h-3.5 text-[#F6C61A]" />
+            </div>
+            <span>Campaign: AI Growth Fund</span>
+          </button>
+
+          {/* Purple Campaign Pill */}
+          <button
+            onClick={() => setActiveCampaignFilter("batch")}
+            className={`px-5 py-3 rounded-full border-2 border-[#15121F] font-extrabold text-xs sm:text-sm flex items-center gap-2.5 transition-transform hover:scale-105 cursor-pointer ${
+              activeCampaignFilter === "batch"
+                ? "bg-[#7C5CFA] text-white shadow-md"
+                : "bg-[#7C5CFA]/20 text-[#15121F]"
+            }`}
+          >
+            <div className="w-6 h-6 rounded-full bg-[#15121F] text-white flex items-center justify-center">
+              <Zap className="w-3.5 h-3.5 text-[#7C5CFA]" />
+            </div>
+            <span>Campaign: Batch Drop Protocol</span>
+          </button>
+        </div>
+
+        {/* Campaign Action & AI Prompt Quick Launcher */}
+        <div className="bg-[#F4F6F0] p-4 rounded-2xl border-2 border-[#15121F]/10 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
+          <div className="space-y-1">
+            <div className="font-extrabold text-sm text-[#15121F]">
+              {activeCampaignFilter === "liquidity"
+                ? "BuildX OKB Community Giveaway (Liquidity Boost)"
+                : activeCampaignFilter === "ai"
+                ? "AI Growth Fund Allocation"
+                : "Batch Drop Distribution Engine"}
+            </div>
+            <p className="text-xs font-medium text-[#15121F]/60">
+              Community Telegram Claim Link: {campaign?.telegramLink || "https://t.me/GrowBot?start=cmp_xlayer1"}
             </p>
           </div>
-          <span className="text-xs bg-[#1FAE52]/10 text-[#1FAE52] font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <button
+              onClick={handleCopyLink}
+              className="px-4 py-2 rounded-xl bg-[#15121F] text-white text-xs font-bold hover:bg-[#2A2438] shrink-0"
+            >
+              {copiedLink ? "Copied Link!" : "Copy Link"}
+            </button>
+            <button
+              onClick={() => setIsTelegramSimulatorOpen(true)}
+              className="px-4 py-2 rounded-xl bg-[#7C5CFA] text-white text-xs font-bold hover:bg-[#6848E4] shrink-0"
+            >
+              Test Bot
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. LIVE TELEGRAM SUBMISSIONS FEED (Exact Reference Image Style) */}
+      <div className="bg-white rounded-3xl p-6 border-4 border-[#15121F] shadow-lg space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-display font-extrabold text-xl text-[#15121F]">
+            Live Telegram Submissions Feed
+          </h3>
+          <span className="text-xs bg-[#1FAE52]/10 text-[#1FAE52] font-extrabold px-3 py-1 rounded-full flex items-center gap-1.5 border border-[#1FAE52]/20">
             <span className="w-2 h-2 rounded-full bg-[#1FAE52] animate-pulse" />
-            Live Supabase Feed
+            Live Supabase Stream
           </span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs sm:text-sm text-[#15121F]">
+          <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b-2 border-[#15121F]/10 text-[#15121F]/60 font-bold uppercase tracking-wider">
-                <th className="py-3 px-4">Telegram Handle</th>
-                <th className="py-3 px-4">EVM Wallet Address</th>
-                <th className="py-3 px-4">Submitted</th>
-                <th className="py-3 px-4">Status</th>
+              <tr className="border-b-4 border-[#15121F] bg-[#F4F6F0] text-[#15121F] font-extrabold text-xs uppercase tracking-wider">
+                <th className="py-3.5 px-4 border-r-2 border-[#15121F]/20">Username</th>
+                <th className="py-3.5 px-4 border-r-2 border-[#15121F]/20">Project</th>
+                <th className="py-3.5 px-4 border-r-2 border-[#15121F]/20">Description</th>
+                <th className="py-3.5 px-4 border-r-2 border-[#15121F]/20">Status</th>
+                <th className="py-3.5 px-4">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#15121F]/10 font-medium">
-              {submissions.map((sub) => (
+            <tbody className="divide-y-2 divide-[#15121F]/10 font-medium text-xs sm:text-sm text-[#15121F]">
+              {submissions.map((sub, index) => (
                 <tr key={sub.id} className="hover:bg-[#F4F6F0]/60 transition-colors">
-                  <td className="py-3.5 px-4 font-bold flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full bg-[#7C5CFA]/10 text-[#7C5CFA] flex items-center justify-center font-bold text-xs">
-                      <User className="w-4 h-4" />
+                  <td className="py-3.5 px-4 font-bold border-r-2 border-[#15121F]/10 flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-[#7C5CFA]/10 text-[#7C5CFA] flex items-center justify-center font-bold text-xs">
+                      <User className="w-3.5 h-3.5" />
                     </div>
                     <span>{sub.username}</span>
                   </td>
-                  <td className="py-3.5 px-4 font-mono text-xs text-[#15121F]/80">
+                  <td className="py-3.5 px-4 border-r-2 border-[#15121F]/10 font-semibold">
+                    {index % 2 === 0 ? "Grow X Layer" : "BuildX OKB Guild"}
+                  </td>
+                  <td className="py-3.5 px-4 border-r-2 border-[#15121F]/10 font-mono text-xs text-[#15121F]/80">
                     {sub.address}
                   </td>
-                  <td className="py-3.5 px-4 text-[#15121F]/60">{sub.timestamp}</td>
-                  <td className="py-3.5 px-4">
+                  <td className="py-3.5 px-4 border-r-2 border-[#15121F]/10">
                     <span
-                      className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold ${
+                      className={`px-3 py-1 rounded-full text-[11px] font-extrabold ${
                         sub.status === "Paid"
-                          ? "bg-[#1FAE52]/10 text-[#1FAE52]"
+                          ? "bg-[#1FAE52] text-white"
                           : sub.status === "Selected"
-                          ? "bg-[#F6C61A]/20 text-[#15121F]"
-                          : "bg-gray-100 text-gray-700"
+                          ? "bg-[#F6C61A] text-[#15121F]"
+                          : "bg-[#15121F]/10 text-[#15121F]"
                       }`}
                     >
                       {sub.status}
                     </span>
+                  </td>
+                  <td className="py-3.5 px-4">
+                    <button
+                      onClick={executeDistribution}
+                      className="px-3 py-1.5 rounded-xl bg-[#15121F] hover:bg-[#7C5CFA] text-white text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      Pay Out
+                    </button>
                   </td>
                 </tr>
               ))}
