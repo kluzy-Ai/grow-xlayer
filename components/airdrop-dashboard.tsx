@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Wallet,
   Zap,
@@ -13,14 +14,24 @@ import {
   Plus,
   ArrowRight,
   ExternalLink,
+  AlertTriangle,
+  LogOut,
+  X,
 } from "lucide-react";
 import { useAccount, useBalance, useConnect, useDisconnect } from "wagmi";
 import { formatEther } from "viem";
 import { useAirdrop } from "@/hooks/use-airdrop";
+import { signOutCreator } from "@/app/actions/auth";
+import { createClient } from "@/utils/supabase/client";
 import { CampaignCreatorModal } from "./campaign-creator-modal";
 import { TelegramSimulatorModal } from "./telegram-simulator-modal";
 
-export const AirdropDashboard: React.FC = () => {
+interface AirdropDashboardProps {
+  user?: any;
+}
+
+export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
+  const router = useRouter();
   const {
     campaign,
     setCampaign,
@@ -41,6 +52,8 @@ export const AirdropDashboard: React.FC = () => {
 
   const [isCreatorModalOpen, setIsCreatorModalOpen] = useState(false);
   const [isTelegramSimulatorOpen, setIsTelegramSimulatorOpen] = useState(false);
+  const [isSignOutModalOpen, setIsSignOutModalOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [aiPrompt, setAiPrompt] = useState(
     "Distribute 0.25 OKB to 20 random eligible wallets"
   );
@@ -49,6 +62,9 @@ export const AirdropDashboard: React.FC = () => {
   const treasuryBalance = balanceData
     ? Number(formatEther(balanceData.value)).toFixed(2)
     : "12.50";
+
+  const userEmail = user?.email || "creator@buildx.xyz";
+  const communityName = user?.user_metadata?.community_name || "BuildX OKB Guild";
 
   const handleCopyLink = () => {
     if (campaign) {
@@ -87,6 +103,21 @@ export const AirdropDashboard: React.FC = () => {
     });
   };
 
+  const handleConfirmSignOut = async () => {
+    setIsSigningOut(true);
+    try {
+      await signOutCreator();
+      const supabase = createClient();
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error("Sign out error:", err);
+    } finally {
+      setIsSigningOut(false);
+      setIsSignOutModalOpen(false);
+      window.location.href = "/login";
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
       {/* Top Banner: Creator Security Portal */}
@@ -105,16 +136,17 @@ export const AirdropDashboard: React.FC = () => {
               </span>
             </div>
             <p className="text-xs text-white/70 font-medium">
-              Logged in as BuildX OKB Guild (creator@buildx.xyz)
+              Logged in as {communityName} ({userEmail})
             </p>
           </div>
         </div>
 
         <button
-          onClick={() => alert("Creator Session Active")}
-          className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-colors"
+          onClick={() => setIsSignOutModalOpen(true)}
+          className="px-4 py-2 rounded-full bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-white text-xs font-bold border border-red-500/30 transition-colors flex items-center gap-1.5"
         >
-          Sign Out Creator
+          <LogOut className="w-3.5 h-3.5" />
+          <span>Sign Out Creator</span>
         </button>
       </div>
 
@@ -138,49 +170,49 @@ export const AirdropDashboard: React.FC = () => {
             </div>
 
             {!isConnected ? (
-              <div className="bg-[#F4F6F0] rounded-3xl p-6 text-center space-y-4 border border-[#15121F]/10">
-                <div className="w-12 h-12 rounded-full bg-[#7C5CFA] text-white mx-auto flex items-center justify-center">
+              <div className="bg-[#F4F6F0] rounded-3xl p-6 border-2 border-[#15121F]/10 text-center space-y-4">
+                <div className="w-12 h-12 rounded-full bg-[#7C5CFA] text-white flex items-center justify-center mx-auto shadow-md">
                   <Wallet className="w-6 h-6 stroke-[2.5]" />
                 </div>
                 <div className="space-y-1">
-                  <h4 className="font-display font-extrabold text-lg text-[#15121F]">
+                  <h4 className="font-display font-extrabold text-base text-[#15121F]">
                     Connect Treasury Wallet
                   </h4>
-                  <p className="text-xs text-[#15121F]/70">
+                  <p className="text-xs text-[#15121F]/60 font-medium">
                     Connect your MetaMask or OKX Wallet on X Layer Testnet to distribute tokens.
                   </p>
                 </div>
                 <button
                   onClick={() => connect({ connector: connectors[0] })}
-                  className="w-full btn-pill btn-grow-primary py-3 text-sm font-extrabold text-white shadow-md flex items-center justify-center gap-2"
+                  className="w-full btn-pill btn-grow-primary py-3 text-sm font-extrabold text-white flex items-center justify-center gap-2 shadow-lg"
                 >
                   <Wallet className="w-4 h-4" />
                   <span>Connect X Layer Wallet</span>
                 </button>
               </div>
             ) : (
-              <div className="space-y-4">
-                <div className="bg-[#F4F6F0] rounded-3xl p-6 border border-[#15121F]/10 space-y-2">
-                  <div className="flex items-center justify-between text-xs text-[#15121F]/60 font-semibold">
-                    <span>Connected Wallet</span>
-                    <button
-                      onClick={() => disconnect()}
-                      className="text-red-600 hover:underline"
-                    >
-                      Disconnect
-                    </button>
-                  </div>
-                  <div className="font-mono text-xs font-bold text-[#15121F] truncate">
-                    {address}
-                  </div>
-                  <div className="pt-2 border-t border-[#15121F]/10 flex items-baseline justify-between">
-                    <span className="text-xs text-[#15121F]/70 font-semibold">
-                      Native Balance:
-                    </span>
-                    <span className="font-display font-extrabold text-2xl text-[#15121F]">
-                      {treasuryBalance} OKB
-                    </span>
-                  </div>
+              <div className="bg-[#F4F6F0] rounded-3xl p-6 border-2 border-[#15121F]/10 space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#15121F]/60 uppercase tracking-wider">
+                    Connected Treasury
+                  </span>
+                  <button
+                    onClick={() => disconnect()}
+                    className="text-xs text-red-600 font-bold hover:underline"
+                  >
+                    Disconnect
+                  </button>
+                </div>
+                <div className="font-mono text-sm font-bold text-[#15121F] bg-white px-3 py-2 rounded-xl border border-[#15121F]/10 truncate">
+                  {address}
+                </div>
+                <div className="pt-2 border-t border-[#15121F]/10 flex items-center justify-between">
+                  <span className="text-xs text-[#15121F]/70 font-semibold">
+                    Native Balance:
+                  </span>
+                  <span className="font-display font-extrabold text-xl text-[#15121F]">
+                    {treasuryBalance} OKB
+                  </span>
                 </div>
               </div>
             )}
@@ -189,14 +221,15 @@ export const AirdropDashboard: React.FC = () => {
             <div className="grid grid-cols-2 gap-3 pt-2">
               <button
                 onClick={() => setIsCreatorModalOpen(true)}
-                className="btn-pill bg-[#1FAE52] text-white hover:bg-[#199445] py-3 text-xs font-extrabold flex items-center justify-center gap-2 shadow-md"
+                className="btn-pill btn-grow-primary py-3 text-xs font-extrabold text-white flex items-center justify-center gap-1.5 shadow-md"
               >
-                <Plus className="w-4 h-4 stroke-[3]" />
+                <Plus className="w-4 h-4" />
                 <span>New Campaign</span>
               </button>
+
               <button
                 onClick={() => setIsTelegramSimulatorOpen(true)}
-                className="btn-pill bg-[#7C5CFA] text-white hover:bg-[#6846E3] py-3 text-xs font-extrabold flex items-center justify-center gap-2 shadow-md"
+                className="btn-pill bg-[#7C5CFA] text-white hover:bg-[#6848E4] py-3 text-xs font-extrabold shadow-md flex items-center justify-center gap-1.5"
               >
                 <Send className="w-4 h-4" />
                 <span>Test Telegram Bot</span>
@@ -205,28 +238,28 @@ export const AirdropDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Column: Active Campaign & AI Command Engine */}
+        {/* Right Column: Active Campaign & AI Command Center */}
         <div className="lg:col-span-7 space-y-6">
-          {campaign && (
+          {campaign ? (
             <div className="bg-white rounded-[36px] p-6 sm:p-8 border-4 border-[#15121F] shadow-xl space-y-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#15121F]/10 pb-4">
+              {/* Campaign Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#15121F]/10 pb-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-display font-extrabold text-2xl text-[#15121F]">
+                    <h3 className="font-display font-extrabold text-2xl text-[#15121F]">
                       {campaign.name}
-                    </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#1FAE52]/10 text-[#1FAE52] font-bold text-xs">
+                    </h3>
+                    <span className="bg-[#1FAE52]/10 text-[#1FAE52] text-xs px-2.5 py-0.5 rounded-full font-extrabold">
                       {campaign.status}
                     </span>
                   </div>
-                  <p className="text-xs text-[#15121F]/60 font-medium">
+                  <p className="text-xs text-[#15121F]/60 font-medium mt-0.5">
                     Created {campaign.createdAt} • Target: {campaign.maxSpots} Wallets
                   </p>
                 </div>
-
-                <div className="text-right">
-                  <div className="text-xs text-[#15121F]/60 font-bold uppercase tracking-wider">
-                    Payout / Wallet
+                <div className="text-left sm:text-right">
+                  <div className="text-xs text-[#15121F]/60 font-bold uppercase">
+                    PAYOUT / WALLET
                   </div>
                   <div className="font-display font-extrabold text-xl text-[#7C5CFA]">
                     {campaign.amountPerWallet} {campaign.token}
@@ -234,22 +267,21 @@ export const AirdropDashboard: React.FC = () => {
                 </div>
               </div>
 
-              {/* Telegram Sharing Link Box */}
-              <div className="bg-[#F4F6F0] rounded-2xl p-4 border border-[#15121F]/10 space-y-2">
-                <div className="text-xs font-bold text-[#15121F]/70 flex items-center justify-between">
-                  <span>Community Telegram Claim Link:</span>
-                  <span className="text-[#0088CC] font-semibold">Telegram Deep Link</span>
-                </div>
+              {/* Telegram Deep Link Box */}
+              <div className="bg-[#F4F6F0] rounded-2xl p-4 border-2 border-[#15121F]/10 space-y-2">
+                <label className="block text-xs font-bold text-[#15121F]/70 uppercase tracking-wider">
+                  Community Telegram Claim Link:
+                </label>
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
                     readOnly
                     value={campaign.telegramLink}
-                    className="flex-1 px-3 py-2 rounded-xl bg-white border border-[#15121F]/10 font-mono text-xs text-[#15121F]"
+                    className="w-full bg-white px-3 py-2 rounded-xl text-xs font-mono border border-[#15121F]/20 text-[#15121F] focus:outline-none"
                   />
                   <button
                     onClick={handleCopyLink}
-                    className="btn-pill bg-[#15121F] text-white hover:bg-[#2A2438] px-4 py-2 text-xs font-bold flex items-center gap-1.5 shrink-0"
+                    className="btn-pill bg-[#15121F] text-white hover:bg-[#2A2438] px-4 py-2 text-xs font-bold shrink-0 flex items-center gap-1.5"
                   >
                     {copiedLink ? (
                       <>
@@ -266,15 +298,15 @@ export const AirdropDashboard: React.FC = () => {
                 </div>
               </div>
 
-              {/* AI Command Bar */}
-              <div className="bg-[#15121F] text-white rounded-3xl p-6 space-y-4 shadow-lg border-2 border-[#15121F]">
+              {/* AI Distribution Command Bar */}
+              <div className="bg-[#15121F] rounded-3xl p-5 text-white space-y-4">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-full bg-[#F6C61A] text-[#15121F] flex items-center justify-center font-bold text-xs">
                     <Bot className="w-4 h-4" />
                   </div>
-                  <span className="font-display font-extrabold text-base">
+                  <h4 className="font-display font-extrabold text-sm text-white">
                     AI Distribution Command Engine
-                  </span>
+                  </h4>
                 </div>
 
                 <form onSubmit={handleAiSubmit} className="space-y-3">
@@ -282,17 +314,16 @@ export const AirdropDashboard: React.FC = () => {
                     rows={2}
                     value={aiPrompt}
                     onChange={(e) => setAiPrompt(e.target.value)}
-                    className="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/20 font-medium text-xs text-white placeholder-white/40 focus:outline-none focus:border-[#F6C61A]"
-                    placeholder="Describe distribution rules (e.g. distribute 0.25 OKB to 20 random wallets)..."
+                    className="w-full bg-white/10 border border-white/20 rounded-2xl p-3 text-xs font-medium text-white placeholder-white/40 focus:outline-none focus:border-[#1FAE52]"
+                    placeholder="e.g. Distribute 0.25 OKB to 20 random eligible wallets..."
                   />
-
                   <button
                     type="submit"
                     disabled={isAiGenerating}
-                    className="w-full btn-pill btn-grow-violet py-3 text-xs font-extrabold text-white shadow-md flex items-center justify-center gap-2"
+                    className="w-full btn-pill bg-[#7C5CFA] hover:bg-[#6848E4] text-white py-2.5 text-xs font-extrabold flex items-center justify-center gap-2 shadow-lg"
                   >
                     {isAiGenerating ? (
-                      <span>Generating Structured Plan...</span>
+                      <span>Analyzing & Generating Plan...</span>
                     ) : (
                       <>
                         <span>Generate AI Distribution Plan</span>
@@ -302,123 +333,130 @@ export const AirdropDashboard: React.FC = () => {
                   </button>
                 </form>
 
-                {/* Render AI Plan Preview */}
+                {/* AI Plan Preview Box */}
                 {aiPlan && (
-                  <div className="bg-white/10 rounded-2xl p-4 space-y-3 border border-white/10 animate-in fade-in duration-200">
-                    <div className="flex items-center justify-between text-xs font-bold text-[#F6C61A]">
-                      <span>AI Plan Summary</span>
-                      <span>{aiPlan.recipients.length} Recipients</span>
+                  <div className="bg-white/10 rounded-2xl p-4 border border-white/15 space-y-3 pt-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-[#F6C61A]">
+                        AI Distribution Strategy
+                      </span>
+                      <span className="bg-[#1FAE52] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        {aiPlan.recipients.length} Wallets Selected
+                      </span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="bg-black/20 p-2.5 rounded-xl">
-                        <div className="text-[10px] text-white/60 font-semibold">Total Payout</div>
-                        <div className="font-extrabold text-white">
-                          {aiPlan.totalAmount} {aiPlan.token}
-                        </div>
+                    <p className="text-xs text-white/80 font-medium">
+                      Optimized batch allocation targeting eligible community wallets on X Layer.
+                    </p>
+
+                    <div className="pt-2 flex items-center justify-between border-t border-white/10 text-xs">
+                      <div>
+                        Total Payout:{" "}
+                        <strong className="text-[#F6C61A]">
+                          {aiPlan.totalAmount} OKB
+                        </strong>
                       </div>
-                      <div className="bg-black/20 p-2.5 rounded-xl">
-                        <div className="text-[10px] text-white/60 font-semibold">Treasury Sufficient</div>
-                        <div className={`font-extrabold ${aiPlan.sufficientBalance ? "text-[#1FAE52]" : "text-red-400"}`}>
-                          {aiPlan.sufficientBalance ? "Sufficient ✅" : "Insufficient ❌"}
-                        </div>
-                      </div>
+                      <button
+                        onClick={executeDistribution}
+                        disabled={isDistributing}
+                        className="btn-pill btn-grow-primary px-4 py-2 text-xs font-bold text-white shadow-md flex items-center gap-1.5"
+                      >
+                        {isDistributing ? (
+                          <span>Executing Drop...</span>
+                        ) : (
+                          <>
+                            <Send className="w-3.5 h-3.5" />
+                            <span>Execute Batch Payout</span>
+                          </>
+                        )}
+                      </button>
                     </div>
 
-                    <button
-                      onClick={executeDistribution}
-                      disabled={isDistributing || !aiPlan.sufficientBalance}
-                      className="w-full btn-pill bg-[#1FAE52] hover:bg-[#199445] text-white py-3 text-xs font-extrabold shadow-md flex items-center justify-center gap-2"
-                    >
-                      {isDistributing ? (
-                        <span>Executing Batch Payout on X Layer...</span>
-                      ) : (
-                        <>
-                          <Zap className="w-4 h-4 fill-current" />
-                          <span>Approve & Execute Batch Payout on X Layer</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                )}
-
-                {/* Last Transaction Hash */}
-                {txHash && (
-                  <div className="p-3 bg-[#1FAE52]/20 rounded-2xl border border-[#1FAE52]/40 text-xs text-white flex items-center justify-between">
-                    <div>
-                      <div className="font-bold text-[#1FAE52] flex items-center gap-1">
-                        <Check className="w-4 h-4 stroke-[3]" />
-                        <span>Batch Drop Executed Onchain!</span>
+                    {txHash && (
+                      <div className="p-2 bg-[#1FAE52]/20 rounded-xl text-[11px] text-[#1FAE52] font-mono flex items-center justify-between">
+                        <span>Tx Hash: {txHash.slice(0, 14)}...</span>
+                        <a
+                          href={`https://www.okx.com/explorer/xlayer-test/tx/${txHash}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="underline hover:text-white flex items-center gap-1"
+                        >
+                          View Explorer <ExternalLink className="w-3 h-3" />
+                        </a>
                       </div>
-                      <div className="font-mono text-[10px] text-white/70 truncate max-w-[200px] sm:max-w-[280px]">
-                        Tx: {txHash}
-                      </div>
-                    </div>
-                    <a
-                      href={`https://www.oklink.com/xlayer-test/tx/${txHash}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-3 py-1.5 rounded-full bg-white text-[#15121F] font-bold text-[10px] hover:bg-[#F4F6F0] flex items-center gap-1 shrink-0"
-                    >
-                      <span>OKLink Explorer</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
+                    )}
                   </div>
                 )}
               </div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-[36px] p-8 border-4 border-[#15121F] shadow-xl text-center space-y-4">
+              <h3 className="font-display font-extrabold text-xl text-[#15121F]">
+                No Active Campaign Found
+              </h3>
+              <p className="text-sm text-[#15121F]/70 font-medium max-w-sm mx-auto">
+                Create a campaign to generate your community Telegram claim bot link.
+              </p>
+              <button
+                onClick={() => setIsCreatorModalOpen(true)}
+                className="btn-pill btn-grow-primary px-6 py-3 text-sm font-bold text-white shadow-lg inline-flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Create Campaign Now</span>
+              </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* Submissions Feed Table */}
-      <div className="bg-white rounded-[36px] p-6 sm:p-8 border-4 border-[#15121F] shadow-xl space-y-6">
+      {/* Live Submissions Table */}
+      <div className="bg-white rounded-[36px] p-6 sm:p-8 border-4 border-[#15121F] shadow-xl space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-display font-extrabold text-2xl text-[#15121F]">
-              Live Community Wallet Submissions
+            <h3 className="font-display font-extrabold text-xl text-[#15121F]">
+              Live Community Submissions ({submissions.length})
             </h3>
             <p className="text-xs text-[#15121F]/60 font-medium">
-              Real-time feed of Telegram submissions saved directly to Supabase.
+              Realtime verified wallet submissions from Telegram claim bot.
             </p>
           </div>
-          <span className="px-3 py-1 rounded-full bg-[#1FAE52]/10 text-[#1FAE52] text-xs font-bold">
-            {submissions.length} Submissions Total
+          <span className="text-xs bg-[#1FAE52]/10 text-[#1FAE52] font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#1FAE52] animate-pulse" />
+            Live Supabase Feed
           </span>
         </div>
 
-        {/* Submissions Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full text-left text-xs sm:text-sm text-[#15121F]">
             <thead>
-              <tr className="border-b border-[#15121F]/10 text-[#15121F]/60 font-bold uppercase tracking-wider">
-                <th className="pb-3 px-3">Telegram Handle</th>
-                <th className="pb-3 px-3">Wallet Address</th>
-                <th className="pb-3 px-3">Submitted At</th>
-                <th className="pb-3 px-3 text-right">Payout Status</th>
+              <tr className="border-b-2 border-[#15121F]/10 text-[#15121F]/60 font-bold uppercase tracking-wider">
+                <th className="py-3 px-4">Telegram Handle</th>
+                <th className="py-3 px-4">EVM Wallet Address</th>
+                <th className="py-3 px-4">Submitted</th>
+                <th className="py-3 px-4">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#15121F]/5 font-medium text-[#15121F]">
+            <tbody className="divide-y divide-[#15121F]/10 font-medium">
               {submissions.map((sub) => (
-                <tr key={sub.id} className="hover:bg-[#F4F6F0]/50 transition-colors">
-                  <td className="py-3 px-3 font-bold text-[#0088CC] flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5 text-[#0088CC]" />
+                <tr key={sub.id} className="hover:bg-[#F4F6F0]/60 transition-colors">
+                  <td className="py-3.5 px-4 font-bold flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-full bg-[#7C5CFA]/10 text-[#7C5CFA] flex items-center justify-center font-bold text-xs">
+                      <User className="w-4 h-4" />
+                    </div>
                     <span>{sub.username}</span>
                   </td>
-                  <td className="py-3 px-3 font-mono text-[11px]">
+                  <td className="py-3.5 px-4 font-mono text-xs text-[#15121F]/80">
                     {sub.address}
                   </td>
-                  <td className="py-3 px-3 text-[#15121F]/60">
-                    {sub.timestamp}
-                  </td>
-                  <td className="py-3 px-3 text-right">
+                  <td className="py-3.5 px-4 text-[#15121F]/60">{sub.timestamp}</td>
+                  <td className="py-3.5 px-4">
                     <span
-                      className={`px-2.5 py-1 rounded-full font-bold text-[10px] ${
+                      className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold ${
                         sub.status === "Paid"
-                          ? "bg-[#1FAE52]/15 text-[#1FAE52]"
+                          ? "bg-[#1FAE52]/10 text-[#1FAE52]"
                           : sub.status === "Selected"
                           ? "bg-[#F6C61A]/20 text-[#15121F]"
-                          : "bg-gray-100 text-gray-600"
+                          : "bg-gray-100 text-gray-700"
                       }`}
                     >
                       {sub.status}
@@ -443,6 +481,63 @@ export const AirdropDashboard: React.FC = () => {
         onClose={() => setIsTelegramSimulatorOpen(false)}
         onSubmitWallet={handleTelegramSubmit}
       />
+
+      {/* DANGER SIGN OUT CONFIRMATION MODAL */}
+      {isSignOutModalOpen && (
+        <div className="fixed inset-0 z-50 bg-[#15121F]/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-[36px] border-4 border-[#15121F] max-w-md w-full p-6 sm:p-8 shadow-2xl space-y-6 animate-mascot-bob">
+            {/* Header with Danger Red Icon */}
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-red-100 border-2 border-red-500 text-red-600 flex items-center justify-center shrink-0 shadow-sm">
+                  <AlertTriangle className="w-6 h-6 stroke-[2.5]" />
+                </div>
+                <div>
+                  <h3 className="font-display font-extrabold text-xl text-[#15121F]">
+                    Sign Out of Creator Portal?
+                  </h3>
+                  <p className="text-xs font-semibold text-red-600">
+                    High Risk Session Termination
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsSignOutModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-[#F4F6F0] text-[#15121F] font-bold border border-[#15121F]/20 hover:bg-[#15121F] hover:text-white transition-colors flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Warning Message Box */}
+            <div className="p-4 bg-red-50 rounded-2xl border-2 border-red-200 space-y-2 text-xs text-red-900 font-medium">
+              <p>
+                You are about to sign out of your protected treasury session. Any unexecuted AI distribution plans or active claim sessions will require re-authentication.
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+              <button
+                onClick={() => setIsSignOutModalOpen(false)}
+                disabled={isSigningOut}
+                className="w-full sm:w-1/2 btn-pill bg-[#F4F6F0] text-[#15121F] hover:bg-[#15121F]/10 py-3.5 text-sm font-bold border-2 border-[#15121F]/20"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleConfirmSignOut}
+                disabled={isSigningOut}
+                className="w-full sm:w-1/2 btn-pill bg-red-600 hover:bg-red-700 text-white py-3.5 text-sm font-extrabold shadow-lg border-2 border-red-800 flex items-center justify-center gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>{isSigningOut ? "Signing Out..." : "Sign Out"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
