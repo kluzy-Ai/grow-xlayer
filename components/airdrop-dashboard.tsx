@@ -16,6 +16,8 @@ import {
   ExternalLink,
   AlertTriangle,
   X,
+  Rocket,
+  CheckCircle2,
 } from "lucide-react";
 import { useAccount, useBalance, useConnect, useDisconnect } from "wagmi";
 import { formatEther } from "viem";
@@ -64,7 +66,7 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
     : "12.50";
 
   const userEmail = user?.email || "creator@buildx.xyz";
-  const communityName = user?.user_metadata?.community_name || "BuildX OKB Guild";
+  const communityName = user?.user_metadata?.community_name || "BuildX Guild";
 
   const handleCopyLink = () => {
     if (campaign) {
@@ -147,14 +149,14 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
           <div>
             <div className="flex items-center gap-2">
               <span className="font-display font-extrabold text-base">
-                Creator Security Portal
+                {communityName} Portal
               </span>
               <span className="text-[10px] font-bold bg-[#1FAE52] text-white px-2 py-0.5 rounded-full uppercase tracking-wider">
                 VERIFIED CREATOR
               </span>
             </div>
             <p className="text-xs text-white/70 font-medium">
-              Logged in as {communityName} ({userEmail})
+              Logged in as {userEmail}
             </p>
           </div>
         </div>
@@ -169,36 +171,48 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
 
       {/* Main Grid: Treasury & Campaign Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column: X Layer Treasury & Wallet Bar */}
+        {/* Left Column: X Layer Treasury Card (Variant 2 Neo-Brutalist Layout) */}
         <div className="lg:col-span-5 space-y-6">
-          <div className="bg-white rounded-[36px] p-6 sm:p-8 border-4 border-[#15121F] shadow-xl space-y-6">
-            <div className="flex items-center justify-between">
+          <div className="bg-white rounded-[36px] p-6 sm:p-8 border-4 border-[#15121F] shadow-2xl space-y-6">
+            <div className="flex items-center justify-between border-b border-[#15121F]/10 pb-4">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-[#1FAE52] text-white flex items-center justify-center font-bold text-sm">
-                  <Zap className="w-4 h-4 fill-current" />
+                <div className="w-9 h-9 rounded-2xl bg-[#1FAE52] text-white flex items-center justify-center font-bold shadow-sm">
+                  <Zap className="w-5 h-5 fill-current" />
                 </div>
-                <span className="font-display font-extrabold text-lg text-[#15121F]">
+                <span className="font-display font-extrabold text-xl text-[#15121F]">
                   X Layer Treasury
                 </span>
               </div>
-              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#F4F6F0] text-[#15121F] border border-[#15121F]/10">
+              <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-[#1FAE52]/10 text-[#1FAE52] border border-[#1FAE52]/20">
                 Chain ID 1952
               </span>
             </div>
 
-            {!isConnected ? (
-              <div className="bg-[#F4F6F0] rounded-3xl p-6 border-2 border-[#15121F]/10 text-center space-y-4">
-                <div className="w-12 h-12 rounded-full bg-[#7C5CFA] text-white flex items-center justify-center mx-auto shadow-md">
-                  <Wallet className="w-6 h-6 stroke-[2.5]" />
+            {/* Treasury Balance Display (Variant 2 Signature Style) */}
+            <div className="bg-[#F4F6F0] rounded-3xl p-6 border-2 border-[#15121F]/10 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-extrabold text-[#15121F]/60 uppercase tracking-wider">
+                  TREASURY BALANCE
+                </span>
+                {isConnected ? (
+                  <button
+                    onClick={handleDisconnectWallet}
+                    className="text-xs text-red-600 font-bold hover:underline"
+                  >
+                    Disconnect
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="font-display font-extrabold text-3xl sm:text-4xl text-[#15121F] tracking-tight">
+                {treasuryBalance} OKB
+              </div>
+
+              {isConnected ? (
+                <div className="font-mono text-xs font-bold text-[#15121F]/70 bg-white px-3 py-2 rounded-xl border border-[#15121F]/10 truncate">
+                  {address}
                 </div>
-                <div className="space-y-1">
-                  <h4 className="font-display font-extrabold text-base text-[#15121F]">
-                    Connect Treasury Wallet
-                  </h4>
-                  <p className="text-xs text-[#15121F]/60 font-medium">
-                    Connect your MetaMask or OKX Wallet on X Layer Testnet to distribute tokens.
-                  </p>
-                </div>
+              ) : (
                 <button
                   onClick={() => {
                     if (connectors.length > 1) {
@@ -210,43 +224,45 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
                   className="w-full btn-pill btn-grow-primary py-3 text-sm font-extrabold text-white flex items-center justify-center gap-2 shadow-lg"
                 >
                   <Wallet className="w-4 h-4" />
-                  <span>Connect X Layer Wallet</span>
+                  <span>Connect Treasury Wallet</span>
                 </button>
-              </div>
-            ) : (
-              <div className="bg-[#F4F6F0] rounded-3xl p-6 border-2 border-[#15121F]/10 space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#15121F]/60 uppercase tracking-wider">
-                    Connected Treasury
-                  </span>
-                  <button
-                    onClick={handleDisconnectWallet}
-                    className="text-xs text-red-600 font-bold hover:underline"
-                  >
-                    Disconnect
-                  </button>
-                </div>
-                <div className="font-mono text-sm font-bold text-[#15121F] bg-white px-3 py-2 rounded-xl border border-[#15121F]/10 truncate">
-                  {address}
-                </div>
-                <div className="pt-2 border-t border-[#15121F]/10 flex items-center justify-between">
-                  <span className="text-xs text-[#15121F]/70 font-semibold">
-                    Native Balance:
-                  </span>
-                  <span className="font-display font-extrabold text-xl text-[#15121F]">
-                    {treasuryBalance} OKB
-                  </span>
-                </div>
-              </div>
-            )}
+              )}
 
-            {/* Quick Actions Bar (Inspired by Variant 2) */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-2">
+              {/* Telegram Deep Link Copy Bar inside Treasury Card (Variant 2 Mockup) */}
+              {campaign && (
+                <div className="pt-2 border-t border-[#15121F]/10 space-y-2">
+                  <span className="text-[11px] font-bold text-[#15121F]/60 uppercase tracking-wider">
+                    Claim Link:
+                  </span>
+                  <div className="flex items-center gap-2 bg-white p-1.5 rounded-xl border border-[#15121F]/20">
+                    <input
+                      type="text"
+                      readOnly
+                      value={campaign.telegramLink}
+                      className="w-full text-xs font-mono bg-transparent text-[#15121F] px-2 focus:outline-none truncate"
+                    />
+                    <button
+                      onClick={handleCopyLink}
+                      className="p-2 rounded-lg bg-[#15121F] text-white hover:bg-[#2A2438] shrink-0"
+                    >
+                      {copiedLink ? (
+                        <Check className="w-3.5 h-3.5 text-[#1FAE52]" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Tri-Color Action Buttons (Variant 2 Signature Layout) */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-1">
               <button
                 onClick={() => setIsCreatorModalOpen(true)}
-                className="btn-pill bg-[#1FAE52] hover:bg-[#199645] text-white py-3 text-xs font-extrabold shadow-md border-2 border-[#15121F] flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-transform hover:scale-105 cursor-pointer"
+                className="btn-pill bg-[#1FAE52] hover:bg-[#199645] text-white py-3.5 px-2 text-xs sm:text-sm font-extrabold shadow-md border-2 border-[#15121F] flex flex-col items-center justify-center gap-1 transition-transform hover:scale-105 cursor-pointer"
               >
-                <Plus className="w-4 h-4 stroke-[2.5]" />
+                <Rocket className="w-5 h-5 stroke-[2.5]" />
                 <span>Campaign</span>
               </button>
 
@@ -255,19 +271,41 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
                   const el = document.getElementById("ai-command-input");
                   if (el) el.focus();
                 }}
-                className="btn-pill bg-[#F6C61A] hover:bg-[#e0b216] text-[#15121F] py-3 text-xs font-extrabold shadow-md border-2 border-[#15121F] flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-transform hover:scale-105 cursor-pointer"
+                className="btn-pill bg-[#F6C61A] hover:bg-[#e0b216] text-[#15121F] py-3.5 px-2 text-xs sm:text-sm font-extrabold shadow-md border-2 border-[#15121F] flex flex-col items-center justify-center gap-1 transition-transform hover:scale-105 cursor-pointer"
               >
-                <Bot className="w-4 h-4 stroke-[2.5]" />
+                <Bot className="w-5 h-5 stroke-[2.5]" />
                 <span>AI Plan</span>
               </button>
 
               <button
                 onClick={() => setIsTelegramSimulatorOpen(true)}
-                className="btn-pill bg-[#7C5CFA] hover:bg-[#6848E4] text-white py-3 text-xs font-extrabold shadow-md border-2 border-[#15121F] flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-transform hover:scale-105 cursor-pointer"
+                className="btn-pill bg-[#7C5CFA] hover:bg-[#6848E4] text-white py-3.5 px-2 text-xs sm:text-sm font-extrabold shadow-md border-2 border-[#15121F] flex flex-col items-center justify-center gap-1 transition-transform hover:scale-105 cursor-pointer"
               >
-                <Send className="w-4 h-4 stroke-[2.5]" />
+                <Zap className="w-5 h-5 stroke-[2.5]" />
                 <span>Batch Drop</span>
               </button>
+            </div>
+
+            {/* Recent Batch Drops Card (Variant 2 Feature Box) */}
+            <div className="bg-[#F4F6F0] rounded-3xl p-5 border-2 border-[#15121F]/10 space-y-3">
+              <div className="flex items-center justify-between text-xs font-extrabold text-[#15121F]">
+                <span>Recent Batch Drops</span>
+                <span className="text-[10px] text-[#15121F]/50 font-semibold">Just now</span>
+              </div>
+              <div className="bg-white rounded-2xl p-3 border border-[#15121F]/10 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#1FAE52] text-white flex items-center justify-center">
+                    <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
+                  </div>
+                  <div>
+                    <div className="font-extrabold text-sm text-[#15121F]">20 Wallets Paid</div>
+                    <div className="text-xs font-medium text-[#15121F]/60">5.0 OKB Total Sent</div>
+                  </div>
+                </div>
+                <span className="text-xs font-extrabold bg-[#1FAE52]/10 text-[#1FAE52] px-2.5 py-1 rounded-full">
+                  Verified
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -301,39 +339,8 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
                 </div>
               </div>
 
-              {/* Telegram Deep Link Box */}
-              <div className="bg-[#F4F6F0] rounded-2xl p-4 border-2 border-[#15121F]/10 space-y-2">
-                <label className="block text-xs font-bold text-[#15121F]/70 uppercase tracking-wider">
-                  Community Telegram Claim Link:
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    readOnly
-                    value={campaign.telegramLink}
-                    className="w-full bg-white px-3 py-2 rounded-xl text-xs font-mono border border-[#15121F]/20 text-[#15121F] focus:outline-none"
-                  />
-                  <button
-                    onClick={handleCopyLink}
-                    className="btn-pill bg-[#15121F] text-white hover:bg-[#2A2438] px-4 py-2 text-xs font-bold shrink-0 flex items-center gap-1.5"
-                  >
-                    {copiedLink ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-[#1FAE52]" />
-                        <span>Copied!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>Copy Link</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-
               {/* AI Distribution Command Bar */}
-              <div className="bg-[#15121F] rounded-3xl p-5 text-white space-y-4">
+              <div className="bg-[#15121F] rounded-3xl p-5 text-white space-y-4 shadow-lg">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-full bg-[#F6C61A] text-[#15121F] flex items-center justify-center font-bold text-xs">
                     <Bot className="w-4 h-4" />
@@ -355,7 +362,7 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
                   <button
                     type="submit"
                     disabled={isAiGenerating}
-                    className="w-full btn-pill bg-[#7C5CFA] hover:bg-[#6848E4] text-white py-2.5 text-xs font-extrabold flex items-center justify-center gap-2 shadow-lg"
+                    className="w-full btn-pill bg-[#7C5CFA] hover:bg-[#6848E4] text-white py-3 text-xs font-extrabold flex items-center justify-center gap-2 shadow-lg cursor-pointer"
                   >
                     {isAiGenerating ? (
                       <span>Analyzing & Generating Plan...</span>
