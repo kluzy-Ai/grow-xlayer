@@ -15,7 +15,6 @@ import {
   ArrowRight,
   ExternalLink,
   AlertTriangle,
-  LogOut,
   X,
 } from "lucide-react";
 import { useAccount, useBalance, useConnect, useDisconnect } from "wagmi";
@@ -52,6 +51,7 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
 
   const [isCreatorModalOpen, setIsCreatorModalOpen] = useState(false);
   const [isTelegramSimulatorOpen, setIsTelegramSimulatorOpen] = useState(false);
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [isSignOutModalOpen, setIsSignOutModalOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [aiPrompt, setAiPrompt] = useState(
@@ -103,12 +103,24 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
     });
   };
 
+  const handleDisconnectWallet = () => {
+    disconnect();
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("wagmi.store");
+      window.localStorage.removeItem("wagmi.recentConnectorId");
+      window.localStorage.removeItem("wagmi.connected");
+    }
+  };
+
+  const handleConnectConnector = (connector: any) => {
+    connect({ connector });
+    setIsWalletModalOpen(false);
+  };
+
   const handleConfirmSignOut = async () => {
     setIsSigningOut(true);
     try {
-      // 1. Clear server-side session cookies
       await signOutCreator();
-      // 2. Clear client-side Supabase session state
       const supabase = createClient();
       await supabase.auth.signOut({ scope: "global" });
     } catch (err) {
@@ -116,11 +128,9 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
     } finally {
       setIsSigningOut(false);
       setIsSignOutModalOpen(false);
-      // 3. Clear local storage & session storage
       if (typeof window !== "undefined") {
         window.localStorage.clear();
         window.sessionStorage.clear();
-        // 4. Hard redirect to /login
         window.location.replace("/login");
       }
     }
@@ -190,7 +200,13 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
                   </p>
                 </div>
                 <button
-                  onClick={() => connect({ connector: connectors[0] })}
+                  onClick={() => {
+                    if (connectors.length > 1) {
+                      setIsWalletModalOpen(true);
+                    } else if (connectors[0]) {
+                      connect({ connector: connectors[0] });
+                    }
+                  }}
                   className="w-full btn-pill btn-grow-primary py-3 text-sm font-extrabold text-white flex items-center justify-center gap-2 shadow-lg"
                 >
                   <Wallet className="w-4 h-4" />
@@ -204,7 +220,7 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
                     Connected Treasury
                   </span>
                   <button
-                    onClick={() => disconnect()}
+                    onClick={handleDisconnectWallet}
                     className="text-xs text-red-600 font-bold hover:underline"
                   >
                     Disconnect
@@ -475,6 +491,41 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
           </table>
         </div>
       </div>
+
+      {/* WALLET CONNECTOR SELECTOR MODAL */}
+      {isWalletModalOpen && (
+        <div className="fixed inset-0 z-50 bg-[#15121F]/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-[36px] border-4 border-[#15121F] max-w-sm w-full p-6 shadow-2xl space-y-5 animate-mascot-bob">
+            <div className="flex items-center justify-between">
+              <h3 className="font-display font-extrabold text-lg text-[#15121F]">
+                Select X Layer Wallet
+              </h3>
+              <button
+                onClick={() => setIsWalletModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-[#F4F6F0] text-[#15121F] font-bold border border-[#15121F]/20 hover:bg-[#15121F] hover:text-white transition-colors flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {connectors.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => handleConnectConnector(c)}
+                  className="w-full p-3.5 bg-[#F4F6F0] hover:bg-[#15121F] hover:text-white rounded-2xl border-2 border-[#15121F]/10 flex items-center justify-between font-bold text-sm text-[#15121F] transition-all group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Wallet className="w-4 h-4 text-[#7C5CFA] group-hover:text-[#F6C61A]" />
+                    <span>{c.name}</span>
+                  </div>
+                  <span className="text-xs text-[#15121F]/50 group-hover:text-white/70">Connect →</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       <CampaignCreatorModal
