@@ -93,7 +93,7 @@ export const Navbar: React.FC = () => {
 
           {/* Desktop Right CTA Row (Connect Wallet + Launch App) */}
           <div className="hidden lg:flex items-center gap-3">
-            {isWalletActive ? (
+            {isWalletActive && address ? (
               <button
                 onClick={() => setIsWalletModalOpen(true)}
                 className="px-4 py-2 rounded-2xl bg-[#15121F] hover:bg-[#2A2438] text-white text-xs font-extrabold border-2 border-[#15121F] flex items-center gap-1.5 shadow-sm cursor-pointer transition-all"
@@ -129,7 +129,7 @@ export const Navbar: React.FC = () => {
 
           {/* Mobile Right Quick Action & Hamburger Toggle */}
           <div className="flex items-center gap-2 lg:hidden">
-            {isWalletActive ? (
+            {isWalletActive && address ? (
               <button
                 onClick={() => setIsWalletModalOpen(true)}
                 className="px-3 py-1.5 rounded-xl bg-[#15121F] text-white text-xs font-extrabold border-2 border-[#15121F] flex items-center gap-1 cursor-pointer"
@@ -205,7 +205,7 @@ export const Navbar: React.FC = () => {
               </Link>
             )}
 
-            {!isWalletActive ? (
+            {!isWalletActive || !address ? (
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
