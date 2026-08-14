@@ -40,17 +40,27 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
   const [copiedLink, setCopiedLink] = useState(false);
   const [instagramToast, setInstagramToast] = useState(false);
 
-  // Auto-calculate Total Campaign Pool based on fixed amount or average random range
-  useEffect(() => {
-    if (spots) {
-      if (amountType === "fixed" && amount) {
-        setTotalPool((Number(spots) * Number(amount)).toFixed(2));
-      } else if (amountType === "random" && minAmount && maxAmount) {
-        const avg = (Number(minAmount) + Number(maxAmount)) / 2;
-        setTotalPool((Number(spots) * avg).toFixed(2));
+  // Live Mathematical Allocation Calculation & Validation
+  const currentTotalPool = Number(totalPool) || 0;
+  const currentSpots = Number(spots) || 0;
+  const currentAmount = Number(amount) || 0;
+  const currentMin = Number(minAmount) || 0;
+  const currentMax = Number(maxAmount) || 0;
+
+  let liveAllocationError = "";
+  if (currentTotalPool > 0 && currentSpots > 0) {
+    if (amountType === "fixed" && currentAmount > 0) {
+      const requiredPayout = currentSpots * currentAmount;
+      if (requiredPayout > currentTotalPool) {
+        liveAllocationError = `Total payout allocation (${requiredPayout.toFixed(2)} ${token}) exceeds Total Campaign Pool (${currentTotalPool.toFixed(2)} ${token}). Adjust pool or per-wallet amount.`;
+      }
+    } else if (amountType === "random" && currentMax > 0) {
+      const maxRequiredPayout = currentSpots * currentMax;
+      if (maxRequiredPayout > currentTotalPool) {
+        liveAllocationError = `Max possible payout allocation (${maxRequiredPayout.toFixed(2)} ${token}) exceeds Total Campaign Pool (${currentTotalPool.toFixed(2)} ${token}). Adjust pool or max amount.`;
       }
     }
-  }, [spots, amountType, amount, minAmount, maxAmount]);
+  }
 
   if (!isOpen) return null;
 
@@ -98,9 +108,14 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
       errs.totalPool = "Please enter total campaign pool";
     }
 
+    // Enforce Mathematical Allocation Rule: (Spots * Amount) <= Total Pool
+    if (liveAllocationError) {
+      errs.allocation = liveAllocationError;
+    }
+
     if (Object.keys(errs).length > 0) {
       setFormErrors(errs);
-      return; // Stop submission if required fields are blank!
+      return; // Stop submission if required fields are blank or allocation exceeds pool!
     }
 
     setFormErrors({});
@@ -538,7 +553,13 @@ Claim your spot now 👇`;
                     </div>
                   </div>
                 )}
-              </div>
+              {/* Live Allocation Error Warning */}
+              {(liveAllocationError || formErrors.allocation) && (
+                <div className="p-3.5 bg-red-50 rounded-2xl border-2 border-red-500 text-xs font-bold text-red-700 flex items-start gap-2 animate-in fade-in">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-red-600 mt-0.5" />
+                  <span>{liveAllocationError || formErrors.allocation}</span>
+                </div>
+              )}
 
               <div className="p-3 bg-[#B4E23F]/30 rounded-2xl border border-[#15121F]/10 text-xs text-[#15121F]/80 font-medium flex items-center gap-2">
                 <Zap className="w-4 h-4 text-[#15121F] shrink-0" />
