@@ -31,6 +31,7 @@ import { createClient } from "@/utils/supabase/client";
 import { CampaignCreatorModal } from "./campaign-creator-modal";
 import { TelegramSimulatorModal } from "./telegram-simulator-modal";
 import { WalletModal } from "./wallet-modal";
+import { PayoutModal } from "./payout-modal";
 
 interface AirdropDashboardProps {
   user?: any;
@@ -60,6 +61,8 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
   const [isTelegramSimulatorOpen, setIsTelegramSimulatorOpen] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [isCampaignsModalOpen, setIsCampaignsModalOpen] = useState(false);
+  const [selectedPayoutCampaign, setSelectedPayoutCampaign] = useState<any | null>(null);
+  const [isPayoutModalOpen, setIsPayoutModalOpen] = useState(false);
   const [isSignOutModalOpen, setIsSignOutModalOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [aiPrompt, setAiPrompt] = useState(
@@ -409,15 +412,15 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
         </div>
       </div>
 
-      {/* 4. LIVE TELEGRAM SUBMISSIONS FEED */}
+      {/* 4. CAMPAIGN FEED */}
       <div className="bg-white rounded-3xl p-6 border-4 border-[#15121F] shadow-lg space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-display font-extrabold text-xl text-[#15121F]">
-            Live Telegram Submissions Feed
+            Campaign Feed
           </h3>
           <span className="text-xs bg-[#1FAE52]/10 text-[#1FAE52] font-extrabold px-3 py-1 rounded-full flex items-center gap-1.5 border border-[#1FAE52]/20">
             <span className="w-2 h-2 rounded-full bg-[#1FAE52] animate-pulse" />
-            Live Supabase Stream
+            Realtime X Layer Sync
           </span>
         </div>
 
@@ -425,51 +428,62 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b-4 border-[#15121F] bg-[#F4F6F0] text-[#15121F] font-extrabold text-xs uppercase tracking-wider">
-                <th className="py-3.5 px-4 border-r-2 border-[#15121F]/20">Username</th>
-                <th className="py-3.5 px-4 border-r-2 border-[#15121F]/20">Project</th>
-                <th className="py-3.5 px-4 border-r-2 border-[#15121F]/20">Description</th>
+                <th className="py-3.5 px-4 border-r-2 border-[#15121F]/20">Campaign Name</th>
+                <th className="py-3.5 px-4 border-r-2 border-[#15121F]/20">No. of Registered Wallet</th>
                 <th className="py-3.5 px-4 border-r-2 border-[#15121F]/20">Status</th>
                 <th className="py-3.5 px-4">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y-2 divide-[#15121F]/10 font-medium text-xs sm:text-sm text-[#15121F]">
-              {submissions.map((sub, index) => (
-                <tr key={sub.id} className="hover:bg-[#F4F6F0]/60 transition-colors">
-                  <td className="py-3.5 px-4 font-bold border-r-2 border-[#15121F]/10 flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-[#7C5CFA]/10 text-[#7C5CFA] flex items-center justify-center font-bold text-xs">
-                      <User className="w-3.5 h-3.5" />
-                    </div>
-                    <span>{sub.username}</span>
-                  </td>
-                  <td className="py-3.5 px-4 border-r-2 border-[#15121F]/10 font-semibold">
-                    {index % 2 === 0 ? "Grow X Layer" : "BuildX OKB Guild"}
-                  </td>
-                  <td className="py-3.5 px-4 border-r-2 border-[#15121F]/10 font-mono text-xs text-[#15121F]/80">
-                    {sub.address}
-                  </td>
-                  <td className="py-3.5 px-4 border-r-2 border-[#15121F]/10">
-                    <span
-                      className={`px-3 py-1 rounded-full text-[11px] font-extrabold ${
-                        sub.status === "Paid"
-                          ? "bg-[#1FAE52] text-white"
-                          : sub.status === "Selected"
-                          ? "bg-[#F6C61A] text-[#15121F]"
-                          : "bg-[#15121F]/10 text-[#15121F]"
-                      }`}
-                    >
-                      {sub.status}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <button
-                      onClick={executeDistribution}
-                      className="px-3 py-1.5 rounded-xl bg-[#15121F] hover:bg-[#7C5CFA] text-white text-xs font-bold transition-colors cursor-pointer"
-                    >
-                      Pay Out
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {allCampaigns.map((camp) => {
+                const regCount =
+                  camp.registeredWallets ??
+                  (camp.status === "Completed"
+                    ? camp.maxSpots
+                    : Math.min(14, camp.maxSpots));
+                const isEnded = camp.status === "Completed" || camp.status === "Ended";
+
+                return (
+                  <tr key={camp.id} className="hover:bg-[#F4F6F0]/60 transition-colors">
+                    <td className="py-3.5 px-4 font-bold border-r-2 border-[#15121F]/10 flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-xl bg-[#7C5CFA]/10 text-[#7C5CFA] flex items-center justify-center font-bold text-xs shrink-0">
+                        <Zap className="w-4 h-4" />
+                      </div>
+                      <span className="font-extrabold text-[#15121F]">{camp.name}</span>
+                    </td>
+
+                    <td className="py-3.5 px-4 border-r-2 border-[#15121F]/10 font-bold">
+                      <span className="text-[#15121F]">
+                        {regCount} / {camp.maxSpots} Wallets
+                      </span>
+                    </td>
+
+                    <td className="py-3.5 px-4 border-r-2 border-[#15121F]/10">
+                      <span
+                        className={`px-3 py-1 rounded-full text-[11px] font-extrabold ${
+                          !isEnded
+                            ? "bg-[#1FAE52] text-white"
+                            : "bg-[#15121F]/10 text-[#15121F]"
+                        }`}
+                      >
+                        {!isEnded ? "Active" : "Ended"}
+                      </span>
+                    </td>
+
+                    <td className="py-3.5 px-4">
+                      <button
+                        onClick={() => {
+                          setSelectedPayoutCampaign(camp);
+                          setIsPayoutModalOpen(true);
+                        }}
+                        className="px-4 py-2 rounded-xl bg-[#15121F] hover:bg-[#7C5CFA] text-white text-xs font-extrabold transition-colors cursor-pointer shadow-sm"
+                      >
+                        Pay Out
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -672,6 +686,17 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
           </div>
         </div>
       )}
+      {/* Campaign Payout Details & Signing Modal */}
+      <PayoutModal
+        isOpen={isPayoutModalOpen}
+        onClose={() => setIsPayoutModalOpen(false)}
+        campaign={selectedPayoutCampaign}
+        submissions={submissions}
+        onExecutePayout={executeDistribution}
+        isDistributing={isDistributing}
+        txHash={txHash}
+      />
+
       {/* Wallet Selection Modal (Mobile & Desktop) */}
       <WalletModal
         isOpen={isWalletModalOpen}
