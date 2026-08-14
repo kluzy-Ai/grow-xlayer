@@ -121,7 +121,7 @@ export default function ProofPage({
         </div>
       </section>
 
-      <Footer />
+      <Footer showCtaBanner={false} />
     </main>
   );
 }
