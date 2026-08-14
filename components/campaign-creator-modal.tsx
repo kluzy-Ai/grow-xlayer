@@ -133,32 +133,45 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
     }
   };
 
-  // Social Share Handlers
-  const shareText = createdCampaign
-    ? `🎉 Join our new token giveaway "${createdCampaign.title}" on Grow (OKX X Layer)! Claim your ${createdCampaign.amountPerWallet} token airdrop now:`
-    : "";
-
+  // Professional Web3 Social Share Copywriting Handlers
   const handleShareX = () => {
     if (!createdCampaign) return;
-    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(createdCampaign.telegramLink)}`;
+    const tweetText = `🚀 Live on X Layer Network!
+
+We just launched "${createdCampaign.title}"!
+
+🎁 Reward: ${createdCampaign.amountPerWallet}
+💰 Pool: ${createdCampaign.totalPool} ${createdCampaign.token}
+⚡ Instant Claim via Telegram:
+
+Claim your spot now 👇`;
+
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(createdCampaign.telegramLink)}&hashtags=XLayer,OKB,Airdrop,Web3`;
     window.open(url, "_blank");
   };
 
   const handleShareTelegram = () => {
     if (!createdCampaign) return;
-    const url = `https://t.me/share/url?url=${encodeURIComponent(createdCampaign.telegramLink)}&text=${encodeURIComponent(shareText)}`;
+    const tgText = `🚀 Live Giveaway: "${createdCampaign.title}" on X Layer!
+🎁 Reward: ${createdCampaign.amountPerWallet}
+💰 Pool: ${createdCampaign.totalPool} ${createdCampaign.token}
+
+Claim your spot now 👇`;
+    const url = `https://t.me/share/url?url=${encodeURIComponent(createdCampaign.telegramLink)}&text=${encodeURIComponent(tgText)}`;
     window.open(url, "_blank");
   };
 
   const handleShareWhatsApp = () => {
     if (!createdCampaign) return;
-    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + " " + createdCampaign.telegramLink)}`;
+    const waText = `🚀 Live Giveaway: "${createdCampaign.title}" on X Layer!\n🎁 Reward: ${createdCampaign.amountPerWallet}\n💰 Pool: ${createdCampaign.totalPool} ${createdCampaign.token}\n\nClaim your spot now: ${createdCampaign.telegramLink}`;
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(waText)}`;
     window.open(url, "_blank");
   };
 
   const handleShareInstagram = () => {
     if (!createdCampaign) return;
-    navigator.clipboard.writeText(`${shareText}\n${createdCampaign.telegramLink}`);
+    const instaText = `🚀 Live Giveaway: "${createdCampaign.title}" on X Layer!\n🎁 Reward: ${createdCampaign.amountPerWallet}\n💰 Pool: ${createdCampaign.totalPool} ${createdCampaign.token}\n\nClaim link: ${createdCampaign.telegramLink}`;
+    navigator.clipboard.writeText(instaText);
     setInstagramToast(true);
     setTimeout(() => setInstagramToast(false), 3000);
   };
