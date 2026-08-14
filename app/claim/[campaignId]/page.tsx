@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Gift, Send, CheckCircle, ArrowRight, ShieldCheck, User, ExternalLink, Lock } from "lucide-react";
+import { Gift, Send, CheckCircle, ArrowRight, ShieldCheck, User, ExternalLink } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 
@@ -20,14 +20,6 @@ export default function ClaimPage({
     if (!handle.trim() || !wallet.trim()) return;
     setSubmitted(true);
   };
-
-  // Anonymous recipient wallet list for public proof (NO Telegram handles displayed for privacy)
-  const anonymousProofWallets = [
-    { address: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F", amount: "0.2500 OKB", status: "Verified Paid" },
-    { address: "0x32Be343B94f860124dC4fEe278FDCBD38C102D88", amount: "0.2500 OKB", status: "Verified Paid" },
-    { address: "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed", amount: "0.2500 OKB", status: "Verified Paid" },
-    { address: "0xfB6916095ca1df60bb79Ce92ce3ea74c37c5d359", amount: "0.2500 OKB", status: "Verified Paid" },
-  ];
 
   return (
     <main className="min-h-screen flex flex-col bg-[#B4E23F]">
@@ -120,65 +112,16 @@ export default function ClaimPage({
               </Link>
             </div>
           )}
-        </div>
 
-        {/* Public Accessible Payout Proof Section (Anonymous Crypto Recipient List) */}
-        <div id="proof" className="bg-white rounded-[32px] p-6 border-4 border-[#15121F] shadow-[8px_8px_0px_0px_#15121F] space-y-4">
-          <div className="flex items-center justify-between border-b-2 border-[#15121F]/10 pb-3">
-            <div className="flex items-center gap-2">
-              <span className="text-base">🔍</span>
-              <h3 className="font-display font-extrabold text-lg text-[#15121F]">
-                Public On-Chain Payout Proof
-              </h3>
-            </div>
-            <span className="text-[10px] bg-[#1FAE52] text-white font-extrabold px-2.5 py-0.5 rounded-full border border-[#15121F] flex items-center gap-1">
-              <Lock className="w-3 h-3" />
-              100% Anonymous
-            </span>
-          </div>
-
-          {/* Proof Summary Info */}
-          <div className="bg-[#F4F6F0] p-4 rounded-2xl border-2 border-[#15121F] space-y-2">
-            <div className="flex items-center justify-between text-xs font-bold text-[#15121F]">
-              <span>Campaign Status:</span>
-              <span className="text-[#1FAE52] font-extrabold">Verified On-Chain Payout</span>
-            </div>
-            <div className="flex items-center justify-between text-xs font-bold text-[#15121F]">
-              <span>Total Distributed:</span>
-              <span className="font-extrabold">3.5000 OKB (~0.0012 OKB Gas)</span>
-            </div>
-            <div className="flex items-center justify-between text-xs font-bold text-[#15121F]">
-              <span>Transaction Hash:</span>
-              <a
-                href="https://www.oklink.com/xlayer-test/tx/0x98f7a2b1c4e6d3f5"
-                target="_blank"
-                rel="noreferrer"
-                className="font-mono text-[#7C5CFA] font-extrabold hover:underline inline-flex items-center gap-1"
-              >
-                <span>0x98f7a2b...d3f5</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
-            </div>
-          </div>
-
-          {/* Anonymous Recipient Wallet Addresses (NO Telegram Usernames to preserve privacy) */}
-          <div className="space-y-2">
-            <p className="text-xs font-extrabold text-[#15121F]/70 uppercase tracking-wider">
-              Verified Anonymous Recipient Wallets ({anonymousProofWallets.length})
-            </p>
-            <div className="space-y-2">
-              {anonymousProofWallets.map((w, idx) => (
-                <div
-                  key={idx}
-                  className="bg-[#F4F6F0] p-2.5 rounded-xl border-2 border-[#15121F]/20 flex items-center justify-between text-xs font-mono font-bold text-[#15121F]"
-                >
-                  <span className="truncate">{w.address.slice(0, 10)}...{w.address.slice(-8)}</span>
-                  <span className="text-[#1FAE52] font-extrabold font-sans text-[11px] px-2 py-0.5 bg-[#1FAE52]/10 rounded-full border border-[#1FAE52]/30">
-                    {w.amount}
-                  </span>
-                </div>
-              ))}
-            </div>
+          {/* Link to Dedicated Public Proof Page */}
+          <div className="border-t-2 border-[#15121F]/10 pt-4 text-center">
+            <Link
+              href={`/proof/${params.campaignId || "cmp_xlayer1"}`}
+              className="text-xs font-extrabold text-[#7C5CFA] hover:underline inline-flex items-center gap-1.5"
+            >
+              <span>View On-Chain Payout Proof & Verified Wallets</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </Link>
           </div>
         </div>
       </section>
