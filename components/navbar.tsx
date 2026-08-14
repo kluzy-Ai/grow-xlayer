@@ -13,6 +13,7 @@ export const Navbar: React.FC = () => {
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const pathname = usePathname();
   const isDashboard = pathname === "/dashboard";
+  const isAuthPage = pathname === "/login" || pathname === "/register";
 
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
@@ -73,14 +74,15 @@ export const Navbar: React.FC = () => {
             >
               FAQ
             </Link>
-            {!isDashboard ? (
+            {!isDashboard && !isAuthPage && (
               <Link
                 href="/login"
                 className="font-bold text-[#15121F] hover:text-[#7C5CFA] transition-colors text-base"
               >
                 Creator Sign In
               </Link>
-            ) : (
+            )}
+            {isDashboard && (
               <Link
                 href="/dashboard"
                 className="font-bold text-[#1FAE52] hover:text-[#7C5CFA] transition-colors text-base flex items-center gap-1.5"
@@ -120,13 +122,15 @@ export const Navbar: React.FC = () => {
               )
             )}
 
-            <Link
-              href="/dashboard"
-              className="btn-pill btn-grow-primary px-5 py-2.5 text-sm flex items-center gap-1.5"
-            >
-              <span>{isDashboard ? "Creator App" : "Launch App"}</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            {!isAuthPage && (
+              <Link
+                href="/dashboard"
+                className="btn-pill btn-grow-primary px-5 py-2.5 text-sm flex items-center gap-1.5"
+              >
+                <span>{isDashboard ? "Creator App" : "Launch App"}</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            )}
           </div>
 
           {/* Mobile Right Quick Action & Hamburger Toggle */}
@@ -191,7 +195,7 @@ export const Navbar: React.FC = () => {
             >
               FAQ
             </Link>
-            {!isDashboard ? (
+            {!isDashboard && !isAuthPage && (
               <Link
                 href="/login"
                 onClick={() => setMobileMenuOpen(false)}
@@ -199,7 +203,8 @@ export const Navbar: React.FC = () => {
               >
                 Creator Sign In
               </Link>
-            ) : (
+            )}
+            {isDashboard && (
               <Link
                 href="/dashboard"
                 onClick={() => setMobileMenuOpen(false)}
