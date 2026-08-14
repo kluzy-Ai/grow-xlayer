@@ -17,16 +17,23 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
   const [title, setTitle] = useState("");
   const [totalPool, setTotalPool] = useState("");
   const [token, setToken] = useState("OKB");
-  const [amount, setAmount] = useState("");
   const [spots, setSpots] = useState("");
+  const [amountType, setAmountType] = useState<"fixed" | "random">("fixed");
+  const [amount, setAmount] = useState("");
+  const [minAmount, setMinAmount] = useState("");
+  const [maxAmount, setMaxAmount] = useState("");
 
-  // Auto-calculate Total Campaign Pool when spots or amount per wallet changes
+  // Auto-calculate Total Campaign Pool based on fixed amount or average random range
   useEffect(() => {
-    if (spots && amount) {
-      const calculated = (Number(spots) * Number(amount)).toFixed(2);
-      setTotalPool(calculated);
+    if (spots) {
+      if (amountType === "fixed" && amount) {
+        setTotalPool((Number(spots) * Number(amount)).toFixed(2));
+      } else if (amountType === "random" && minAmount && maxAmount) {
+        const avg = (Number(minAmount) + Number(maxAmount)) / 2;
+        setTotalPool((Number(spots) * avg).toFixed(2));
+      }
     }
-  }, [spots, amount]);
+  }, [spots, amountType, amount, minAmount, maxAmount]);
 
   if (!isOpen) return null;
 
@@ -38,7 +45,10 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
       title: title || "Community Giveaway",
       totalPool: Number(totalPool) || 5.0,
       token,
-      amountPerWallet: Number(amount) || 0.25,
+      amountType,
+      amountPerWallet: amountType === "fixed" ? Number(amount) || 0.25 : `${minAmount} - ${maxAmount}`,
+      minAmount: amountType === "random" ? Number(minAmount) : undefined,
+      maxAmount: amountType === "random" ? Number(maxAmount) : undefined,
       maxSpots: Number(spots) || 20,
       telegramLink: `https://t.me/GrowBot?start=${slug}`,
       createdAt: "Just now",
@@ -141,19 +151,67 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
             </div>
           </div>
 
+          {/* Amount Per Wallet Dropdown & Input Options */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-[#15121F]/70 mb-1">
-              Amount Per Wallet
+              Amount Per Wallet Type
             </label>
-            <input
-              type="number"
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              required
-              className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40"
-              placeholder="e.g. 0.25"
-            />
+            <select
+              value={amountType}
+              onChange={(e) => setAmountType(e.target.value as "fixed" | "random")}
+              className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none mb-3"
+            >
+              <option value="fixed">Fixed</option>
+              <option value="random">Random</option>
+            </select>
+
+            {amountType === "fixed" ? (
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#15121F]/70 mb-1">
+                  Amount Per Wallet
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40"
+                  placeholder="e.g. 0.25"
+                />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#15121F]/70 mb-1">
+                    Min Amount
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={minAmount}
+                    onChange={(e) => setMinAmount(e.target.value)}
+                    required
+                    className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40"
+                    placeholder="e.g. 0.10"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#15121F]/70 mb-1">
+                    Max Amount
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={maxAmount}
+                    onChange={(e) => setMaxAmount(e.target.value)}
+                    required
+                    className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40"
+                    placeholder="e.g. 0.50"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="p-3 bg-[#B4E23F]/30 rounded-2xl border border-[#15121F]/10 text-xs text-[#15121F]/80 font-medium flex items-center gap-2">
