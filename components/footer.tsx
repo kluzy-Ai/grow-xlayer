@@ -1,5 +1,8 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Coins, ArrowRight } from "lucide-react";
 import { Mascot } from "./mascot";
 
@@ -8,6 +11,9 @@ interface FooterProps {
 }
 
 export const Footer: React.FC<FooterProps> = ({ showCtaBanner = true }) => {
+  const pathname = usePathname();
+  const isDashboard = pathname === "/dashboard";
+
   return (
     <footer className="bg-[#B4E23F] pt-12 pb-12 border-t-2 border-[#15121F]/10 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -80,12 +86,20 @@ export const Footer: React.FC<FooterProps> = ({ showCtaBanner = true }) => {
             <Link href="/#how-it-works" className="hover:text-[#1FAE52] transition-colors">
               How it works
             </Link>
-            <Link href="/login" className="hover:text-[#1FAE52] transition-colors">
-              Creator Sign In
-            </Link>
-            <Link href="/register" className="hover:text-[#1FAE52] transition-colors">
-              Register Account
-            </Link>
+            {!isDashboard ? (
+              <>
+                <Link href="/login" className="hover:text-[#1FAE52] transition-colors">
+                  Creator Sign In
+                </Link>
+                <Link href="/register" className="hover:text-[#1FAE52] transition-colors">
+                  Register Account
+                </Link>
+              </>
+            ) : (
+              <Link href="/dashboard" className="hover:text-[#1FAE52] transition-colors font-bold">
+                Dashboard
+              </Link>
+            )}
             <Link href="/faq" className="hover:text-[#1FAE52] transition-colors">
               FAQ
             </Link>

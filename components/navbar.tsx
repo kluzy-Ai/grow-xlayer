@@ -2,11 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Coins, ArrowRight, Menu, X } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Coins, ArrowRight, Menu, X, LayoutDashboard } from "lucide-react";
 
 export const Navbar: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const isDashboard = pathname === "/dashboard";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -55,12 +58,22 @@ export const Navbar: React.FC = () => {
             >
               FAQ
             </Link>
-            <Link
-              href="/login"
-              className="font-bold text-[#15121F] hover:text-[#7C5CFA] transition-colors text-base"
-            >
-              Creator Sign In
-            </Link>
+            {!isDashboard ? (
+              <Link
+                href="/login"
+                className="font-bold text-[#15121F] hover:text-[#7C5CFA] transition-colors text-base"
+              >
+                Creator Sign In
+              </Link>
+            ) : (
+              <Link
+                href="/dashboard"
+                className="font-bold text-[#1FAE52] hover:text-[#7C5CFA] transition-colors text-base flex items-center gap-1.5"
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                <span>Dashboard</span>
+              </Link>
+            )}
           </nav>
 
           {/* Desktop Right CTA */}
@@ -69,7 +82,7 @@ export const Navbar: React.FC = () => {
               href="/dashboard"
               className="btn-pill btn-grow-primary px-6 py-2.5 text-base flex items-center gap-1.5"
             >
-              <span>Launch App</span>
+              <span>{isDashboard ? "Creator App" : "Launch App"}</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -108,19 +121,29 @@ export const Navbar: React.FC = () => {
             >
               FAQ
             </Link>
-            <Link
-              href="/login"
-              onClick={() => setMobileMenuOpen(false)}
-              className="py-3 px-4 rounded-2xl bg-white/60 text-[#15121F] border border-[#15121F]/10 active:scale-98"
-            >
-              Creator Sign In
-            </Link>
+            {!isDashboard ? (
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="py-3 px-4 rounded-2xl bg-white/60 text-[#15121F] border border-[#15121F]/10 active:scale-98"
+              >
+                Creator Sign In
+              </Link>
+            ) : (
+              <Link
+                href="/dashboard"
+                onClick={() => setMobileMenuOpen(false)}
+                className="py-3 px-4 rounded-2xl bg-white/60 text-[#1FAE52] border border-[#15121F]/10 active:scale-98"
+              >
+                Dashboard
+              </Link>
+            )}
             <Link
               href="/dashboard"
               onClick={() => setMobileMenuOpen(false)}
               className="btn-pill btn-grow-primary py-4 text-lg mt-4 shadow-lg flex items-center justify-center gap-2"
             >
-              <span>Launch App</span>
+              <span>{isDashboard ? "Creator App" : "Launch App"}</span>
               <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
