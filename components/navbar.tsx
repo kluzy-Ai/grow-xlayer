@@ -91,31 +91,33 @@ export const Navbar: React.FC = () => {
             )}
           </nav>
 
-          {/* Desktop Right CTA Row (Connect Wallet + Launch App) */}
+          {/* Desktop Right CTA Row */}
           <div className="hidden lg:flex items-center gap-3">
-            {isWalletActive && address ? (
-              <button
-                onClick={() => setIsWalletModalOpen(true)}
-                className="px-4 py-2 rounded-2xl bg-[#15121F] hover:bg-[#2A2438] text-white text-xs font-extrabold border-2 border-[#15121F] flex items-center gap-1.5 shadow-sm cursor-pointer transition-all"
-                title="Manage Web3 Wallet"
-              >
-                <Wallet className="w-4 h-4 text-[#B4E23F]" />
-                <span>{`${address.slice(0, 6)}...${address.slice(-4)}`}</span>
-              </button>
-            ) : (
-              <button
-                onClick={() => {
-                  if (typeof window !== "undefined") {
-                    window.localStorage.removeItem("grow_wallet_disconnected");
-                  }
-                  setIsManuallyDisconnected(false);
-                  setIsWalletModalOpen(true);
-                }}
-                className="px-4 py-2 rounded-2xl bg-white hover:bg-[#F4F6F0] text-[#15121F] text-xs font-extrabold border-2 border-[#15121F] flex items-center gap-1.5 shadow-sm cursor-pointer transition-all"
-              >
-                <Wallet className="w-4 h-4 text-[#7C5CFA]" />
-                <span>Connect Wallet</span>
-              </button>
+            {isDashboard && (
+              isWalletActive && address ? (
+                <button
+                  onClick={() => setIsWalletModalOpen(true)}
+                  className="px-4 py-2 rounded-2xl bg-[#15121F] hover:bg-[#2A2438] text-white text-xs font-extrabold border-2 border-[#15121F] flex items-center gap-1.5 shadow-sm cursor-pointer transition-all"
+                  title="Manage Web3 Wallet"
+                >
+                  <Wallet className="w-4 h-4 text-[#B4E23F]" />
+                  <span>{`${address.slice(0, 6)}...${address.slice(-4)}`}</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    if (typeof window !== "undefined") {
+                      window.localStorage.removeItem("grow_wallet_disconnected");
+                    }
+                    setIsManuallyDisconnected(false);
+                    setIsWalletModalOpen(true);
+                  }}
+                  className="px-4 py-2 rounded-2xl bg-white hover:bg-[#F4F6F0] text-[#15121F] text-xs font-extrabold border-2 border-[#15121F] flex items-center gap-1.5 shadow-sm cursor-pointer transition-all"
+                >
+                  <Wallet className="w-4 h-4 text-[#7C5CFA]" />
+                  <span>Connect Wallet</span>
+                </button>
+              )
             )}
 
             <Link
@@ -129,28 +131,30 @@ export const Navbar: React.FC = () => {
 
           {/* Mobile Right Quick Action & Hamburger Toggle */}
           <div className="flex items-center gap-2 lg:hidden">
-            {isWalletActive && address ? (
-              <button
-                onClick={() => setIsWalletModalOpen(true)}
-                className="px-3 py-1.5 rounded-xl bg-[#15121F] text-white text-xs font-extrabold border-2 border-[#15121F] flex items-center gap-1 cursor-pointer"
-              >
-                <Wallet className="w-3.5 h-3.5 text-[#B4E23F]" />
-                <span>{`${address.slice(0, 4)}...${address.slice(-2)}`}</span>
-              </button>
-            ) : (
-              <button
-                onClick={() => {
-                  if (typeof window !== "undefined") {
-                    window.localStorage.removeItem("grow_wallet_disconnected");
-                  }
-                  setIsManuallyDisconnected(false);
-                  setIsWalletModalOpen(true);
-                }}
-                className="px-3 py-1.5 rounded-xl bg-white text-[#15121F] text-xs font-extrabold border-2 border-[#15121F] flex items-center gap-1 cursor-pointer"
-              >
-                <Wallet className="w-3.5 h-3.5 text-[#7C5CFA]" />
-                <span>Wallet</span>
-              </button>
+            {isDashboard && (
+              isWalletActive && address ? (
+                <button
+                  onClick={() => setIsWalletModalOpen(true)}
+                  className="px-3 py-1.5 rounded-xl bg-[#15121F] text-white text-xs font-extrabold border-2 border-[#15121F] flex items-center gap-1 cursor-pointer"
+                >
+                  <Wallet className="w-3.5 h-3.5 text-[#B4E23F]" />
+                  <span>{`${address.slice(0, 4)}...${address.slice(-2)}`}</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    if (typeof window !== "undefined") {
+                      window.localStorage.removeItem("grow_wallet_disconnected");
+                    }
+                    setIsManuallyDisconnected(false);
+                    setIsWalletModalOpen(true);
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-white text-[#15121F] text-xs font-extrabold border-2 border-[#15121F] flex items-center gap-1 cursor-pointer"
+                >
+                  <Wallet className="w-3.5 h-3.5 text-[#7C5CFA]" />
+                  <span>Wallet</span>
+                </button>
+              )
             )}
 
             <button
@@ -205,32 +209,34 @@ export const Navbar: React.FC = () => {
               </Link>
             )}
 
-            {!isWalletActive || !address ? (
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  if (typeof window !== "undefined") {
-                    window.localStorage.removeItem("grow_wallet_disconnected");
-                  }
-                  setIsManuallyDisconnected(false);
-                  setIsWalletModalOpen(true);
-                }}
-                className="py-3.5 px-4 rounded-2xl bg-white text-[#15121F] border-2 border-[#15121F] font-extrabold flex items-center justify-center gap-2 shadow-sm"
-              >
-                <Wallet className="w-5 h-5 text-[#7C5CFA]" />
-                <span>Connect Web3 Wallet</span>
-              </button>
-            ) : (
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  setIsWalletModalOpen(true);
-                }}
-                className="py-3.5 px-4 rounded-2xl bg-[#15121F] text-white border-2 border-[#15121F] font-extrabold flex items-center justify-center gap-2 shadow-sm"
-              >
-                <Wallet className="w-5 h-5 text-[#B4E23F]" />
-                <span>Connected: {`${address.slice(0, 6)}...${address.slice(-4)}`}</span>
-              </button>
+            {isDashboard && (
+              !isWalletActive || !address ? (
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    if (typeof window !== "undefined") {
+                      window.localStorage.removeItem("grow_wallet_disconnected");
+                    }
+                    setIsManuallyDisconnected(false);
+                    setIsWalletModalOpen(true);
+                  }}
+                  className="py-3.5 px-4 rounded-2xl bg-white text-[#15121F] border-2 border-[#15121F] font-extrabold flex items-center justify-center gap-2 shadow-sm"
+                >
+                  <Wallet className="w-5 h-5 text-[#7C5CFA]" />
+                  <span>Connect Web3 Wallet</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setIsWalletModalOpen(true);
+                  }}
+                  className="py-3.5 px-4 rounded-2xl bg-[#15121F] text-white border-2 border-[#15121F] font-extrabold flex items-center justify-center gap-2 shadow-sm"
+                >
+                  <Wallet className="w-5 h-5 text-[#B4E23F]" />
+                  <span>Connected: {`${address.slice(0, 6)}...${address.slice(-4)}`}</span>
+                </button>
+              )
             )}
 
             <Link
