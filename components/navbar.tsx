@@ -3,13 +3,28 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Coins, ArrowRight, Menu, X, LayoutDashboard } from "lucide-react";
+import { Coins, ArrowRight, Menu, X, LayoutDashboard, Wallet } from "lucide-react";
+import { useAccount, useDisconnect } from "wagmi";
+import { WalletModal } from "./wallet-modal";
 
 export const Navbar: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const pathname = usePathname();
   const isDashboard = pathname === "/dashboard";
+
+  const { address, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
+
+  const [isManuallyDisconnected, setIsManuallyDisconnected] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return window.localStorage.getItem("grow_wallet_disconnected") === "true";
+    }
+    return false;
+  });
+
+  const isWalletActive = Boolean(isConnected && address && !isManuallyDisconnected);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -76,37 +91,88 @@ export const Navbar: React.FC = () => {
             )}
           </nav>
 
-          {/* Desktop Right CTA */}
-          <div className="hidden lg:flex items-center gap-4">
+          {/* Desktop Right CTA Row (Connect Wallet + Launch App) */}
+          <div className="hidden lg:flex items-center gap-3">
+            {isWalletActive ? (
+              <button
+                onClick={() => setIsWalletModalOpen(true)}
+                className="px-4 py-2 rounded-2xl bg-[#15121F] hover:bg-[#2A2438] text-white text-xs font-extrabold border-2 border-[#15121F] flex items-center gap-1.5 shadow-sm cursor-pointer transition-all"
+                title="Manage Web3 Wallet"
+              >
+                <Wallet className="w-4 h-4 text-[#B4E23F]" />
+                <span>{`${address.slice(0, 6)}...${address.slice(-4)}`}</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    window.localStorage.removeItem("grow_wallet_disconnected");
+                  }
+                  setIsManuallyDisconnected(false);
+                  setIsWalletModalOpen(true);
+                }}
+                className="px-4 py-2 rounded-2xl bg-white hover:bg-[#F4F6F0] text-[#15121F] text-xs font-extrabold border-2 border-[#15121F] flex items-center gap-1.5 shadow-sm cursor-pointer transition-all"
+              >
+                <Wallet className="w-4 h-4 text-[#7C5CFA]" />
+                <span>Connect Wallet</span>
+              </button>
+            )}
+
             <Link
               href="/dashboard"
-              className="btn-pill btn-grow-primary px-6 py-2.5 text-base flex items-center gap-1.5"
+              className="btn-pill btn-grow-primary px-5 py-2.5 text-sm flex items-center gap-1.5"
             >
               <span>{isDashboard ? "Creator App" : "Launch App"}</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 
-          {/* Mobile Hamburger Toggle */}
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 rounded-full bg-white/80 border border-[#15121F]/10 text-[#15121F] focus:outline-none"
-            aria-label="Toggle navigation menu"
-          >
-            {mobileMenuOpen ? (
-              <X className="w-6 h-6 stroke-[2.5]" />
+          {/* Mobile Right Quick Action & Hamburger Toggle */}
+          <div className="flex items-center gap-2 lg:hidden">
+            {isWalletActive ? (
+              <button
+                onClick={() => setIsWalletModalOpen(true)}
+                className="px-3 py-1.5 rounded-xl bg-[#15121F] text-white text-xs font-extrabold border-2 border-[#15121F] flex items-center gap-1 cursor-pointer"
+              >
+                <Wallet className="w-3.5 h-3.5 text-[#B4E23F]" />
+                <span>{`${address.slice(0, 4)}...${address.slice(-2)}`}</span>
+              </button>
             ) : (
-              <Menu className="w-6 h-6 stroke-[2.5]" />
+              <button
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    window.localStorage.removeItem("grow_wallet_disconnected");
+                  }
+                  setIsManuallyDisconnected(false);
+                  setIsWalletModalOpen(true);
+                }}
+                className="px-3 py-1.5 rounded-xl bg-white text-[#15121F] text-xs font-extrabold border-2 border-[#15121F] flex items-center gap-1 cursor-pointer"
+              >
+                <Wallet className="w-3.5 h-3.5 text-[#7C5CFA]" />
+                <span>Wallet</span>
+              </button>
             )}
-          </button>
+
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-full bg-white/80 border border-[#15121F]/10 text-[#15121F] focus:outline-none"
+              aria-label="Toggle navigation menu"
+            >
+              {mobileMenuOpen ? (
+                <X className="w-6 h-6 stroke-[2.5]" />
+              ) : (
+                <Menu className="w-6 h-6 stroke-[2.5]" />
+              )}
+            </button>
+          </div>
         </div>
       </header>
 
       {/* Mobile Menu Fullscreen Drawer Sheet */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-40 lg:hidden flex flex-col bg-[#B4E23F] pt-24 px-6 pb-8 animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="flex flex-col gap-6 text-center text-xl font-display font-bold">
+          <div className="flex flex-col gap-5 text-center text-xl font-display font-bold">
             <Link
               href="/#how-it-works"
               onClick={() => setMobileMenuOpen(false)}
@@ -138,10 +204,39 @@ export const Navbar: React.FC = () => {
                 Dashboard
               </Link>
             )}
+
+            {!isWalletActive ? (
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  if (typeof window !== "undefined") {
+                    window.localStorage.removeItem("grow_wallet_disconnected");
+                  }
+                  setIsManuallyDisconnected(false);
+                  setIsWalletModalOpen(true);
+                }}
+                className="py-3.5 px-4 rounded-2xl bg-white text-[#15121F] border-2 border-[#15121F] font-extrabold flex items-center justify-center gap-2 shadow-sm"
+              >
+                <Wallet className="w-5 h-5 text-[#7C5CFA]" />
+                <span>Connect Web3 Wallet</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setIsWalletModalOpen(true);
+                }}
+                className="py-3.5 px-4 rounded-2xl bg-[#15121F] text-white border-2 border-[#15121F] font-extrabold flex items-center justify-center gap-2 shadow-sm"
+              >
+                <Wallet className="w-5 h-5 text-[#B4E23F]" />
+                <span>Connected: {`${address.slice(0, 6)}...${address.slice(-4)}`}</span>
+              </button>
+            )}
+
             <Link
               href="/dashboard"
               onClick={() => setMobileMenuOpen(false)}
-              className="btn-pill btn-grow-primary py-4 text-lg mt-4 shadow-lg flex items-center justify-center gap-2"
+              className="btn-pill btn-grow-primary py-4 text-lg mt-2 shadow-lg flex items-center justify-center gap-2"
             >
               <span>{isDashboard ? "Creator App" : "Launch App"}</span>
               <ArrowRight className="w-5 h-5" />
@@ -153,6 +248,12 @@ export const Navbar: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Global Wallet Modal */}
+      <WalletModal
+        isOpen={isWalletModalOpen}
+        onClose={() => setIsWalletModalOpen(false)}
+      />
     </>
   );
 };
