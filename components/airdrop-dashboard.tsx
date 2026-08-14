@@ -181,33 +181,34 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-6">
       {/* 1. PRIMARY DASHBOARD HEADER BAR */}
-      <div className="bg-white rounded-3xl p-4 border-4 border-[#15121F] shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-[#F6C61A] text-[#15121F] border-2 border-[#15121F] flex items-center justify-center font-bold">
-              <Zap className="w-4 h-4 fill-current text-[#15121F]" />
+      <div className="bg-white rounded-3xl p-3.5 sm:p-4 border-4 border-[#15121F] shadow-lg flex flex-row items-center justify-between gap-2 sm:gap-4">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#F6C61A] text-[#15121F] border-2 border-[#15121F] flex items-center justify-center font-bold shrink-0">
+              <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current text-[#15121F]" />
             </div>
-            <span className="font-display font-extrabold text-lg text-[#15121F]">
+            <span className="font-display font-extrabold text-base sm:text-lg text-[#15121F]">
               Grow
             </span>
           </div>
           <span className="text-[#15121F]/30 font-bold">|</span>
-          <span className="text-xs font-extrabold text-[#15121F]">
+          <span className="text-[11px] sm:text-xs font-extrabold text-[#15121F] whitespace-nowrap">
             X Layer Network
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {isConnected && address && (
-            <div className="flex items-center gap-2 bg-[#F4F6F0] px-3 py-1.5 rounded-full border border-[#15121F]/10 text-xs font-bold text-[#15121F]">
-              <User className="w-4 h-4 text-[#7C5CFA]" />
-              <span>User: {address.slice(0, 6)}...{address.slice(-4)}</span>
+            <div className="flex items-center gap-1.5 bg-[#F4F6F0] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border border-[#15121F]/10 text-[11px] sm:text-xs font-bold text-[#15121F]">
+              <User className="w-3.5 h-3.5 text-[#7C5CFA] shrink-0" />
+              <span className="hidden sm:inline">User: {address.slice(0, 6)}...{address.slice(-4)}</span>
+              <span className="sm:hidden">{address.slice(0, 4)}...{address.slice(-2)}</span>
             </div>
           )}
 
           <button
             onClick={() => setIsSignOutModalOpen(true)}
-            className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-extrabold border-2 border-red-800 transition-all shadow-sm cursor-pointer"
+            className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-extrabold border-2 border-red-800 transition-all shadow-sm cursor-pointer whitespace-nowrap"
           >
             Sign Out
           </button>
