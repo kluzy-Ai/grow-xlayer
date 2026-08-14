@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { X, CheckCircle2, ExternalLink } from "lucide-react";
 import { useAccount } from "wagmi";
+import { SuccessShareModal } from "./success-share-modal";
 
 interface CampaignItem {
   id: string;
@@ -37,6 +38,7 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({
 }) => {
   const { isConnected } = useAccount();
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   if (!isOpen || !campaign) return null;
 
@@ -50,6 +52,7 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({
   const handleSignTransaction = async () => {
     onExecutePayout();
     setIsSuccess(true);
+    setIsShareModalOpen(true);
   };
 
   const recipientList =
@@ -194,6 +197,17 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Celebratory 10-Second Confetti & Social Share Popup */}
+      <SuccessShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        campaignName={campaign.name}
+        totalAmount={campaignBudget}
+        tokenSymbol={campaign.token}
+        txHash={txHash}
+        recipientCount={recipientList.length}
+      />
     </div>
   );
 };
