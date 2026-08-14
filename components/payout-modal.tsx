@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, CheckCircle2, ExternalLink } from "lucide-react";
+import { X, CheckCircle2, ExternalLink, Wallet } from "lucide-react";
 import { useAccount } from "wagmi";
 import { SuccessShareModal } from "./success-share-modal";
 
@@ -25,6 +25,7 @@ interface PayoutModalProps {
   onExecutePayout: () => void;
   isDistributing: boolean;
   txHash: string | null;
+  onConnectWallet?: () => void;
 }
 
 export const PayoutModal: React.FC<PayoutModalProps> = ({
@@ -35,6 +36,7 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({
   onExecutePayout,
   isDistributing,
   txHash,
+  onConnectWallet,
 }) => {
   const { isConnected } = useAccount();
   const [isSuccess, setIsSuccess] = useState(false);
@@ -50,6 +52,10 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({
   const totalSpend = (Number(campaignBudget) + estimatedGasFee).toFixed(4);
 
   const handleSignTransaction = async () => {
+    if (!isConnected) {
+      if (onConnectWallet) onConnectWallet();
+      return;
+    }
     onExecutePayout();
     setIsSuccess(true);
     setIsShareModalOpen(true);
@@ -184,9 +190,18 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({
           <button
             onClick={handleSignTransaction}
             disabled={isDistributing}
-            className="w-full py-3.5 sm:py-4 px-4 rounded-full bg-[#15121F] hover:bg-[#2A2438] text-white font-extrabold text-xs sm:text-sm border-3 sm:border-4 border-[#B4E23F] shadow-lg transition-transform hover:scale-[1.01] active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2"
+            className={`w-full py-3.5 sm:py-4 px-4 rounded-full font-extrabold text-xs sm:text-sm border-3 sm:border-4 shadow-lg transition-transform hover:scale-[1.01] active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2 ${
+              !isConnected
+                ? "bg-[#7C5CFA] hover:bg-[#6848E4] text-white border-[#15121F]"
+                : "bg-[#15121F] hover:bg-[#2A2438] text-white border-[#B4E23F]"
+            }`}
           >
-            {isDistributing ? (
+            {!isConnected ? (
+              <>
+                <Wallet className="w-4 h-4" />
+                <span>Connect Wallet to Pay Out ({totalSpend} {campaign.token})</span>
+              </>
+            ) : isDistributing ? (
               <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 <span>Signing Transaction on X Layer...</span>

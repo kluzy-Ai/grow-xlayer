@@ -712,6 +712,7 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
         onExecutePayout={executeDistribution}
         isDistributing={isDistributing}
         txHash={txHash}
+        onConnectWallet={() => setIsWalletModalOpen(true)}
       />
 
       {/* Wallet Selection Modal (Mobile & Desktop) */}
