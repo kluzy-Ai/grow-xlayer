@@ -77,7 +77,7 @@ export const Footer: React.FC<FooterProps> = ({ showCtaBanner = true }) => {
 
           {/* Links */}
           <div className="flex flex-wrap items-center justify-center gap-6 text-[#15121F]/80">
-            <Link href="#how-it-works" className="hover:text-[#1FAE52] transition-colors">
+            <Link href="/#how-it-works" className="hover:text-[#1FAE52] transition-colors">
               How it works
             </Link>
             <Link href="/login" className="hover:text-[#1FAE52] transition-colors">

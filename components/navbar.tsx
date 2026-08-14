@@ -44,7 +44,7 @@ export const Navbar: React.FC = () => {
           {/* Desktop Nav Links */}
           <nav className="hidden lg:flex items-center gap-8">
             <Link
-              href="#how-it-works"
+              href="/#how-it-works"
               className="font-medium text-[#15121F] hover:text-[#1FAE52] transition-colors text-base"
             >
               How it works
@@ -95,7 +95,7 @@ export const Navbar: React.FC = () => {
         <div className="fixed inset-0 z-40 lg:hidden flex flex-col bg-[#B4E23F] pt-24 px-6 pb-8 animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="flex flex-col gap-6 text-center text-xl font-display font-bold">
             <Link
-              href="#how-it-works"
+              href="/#how-it-works"
               onClick={() => setMobileMenuOpen(false)}
               className="py-3 px-4 rounded-2xl bg-white/60 text-[#15121F] border border-[#15121F]/10 active:scale-98"
             >
