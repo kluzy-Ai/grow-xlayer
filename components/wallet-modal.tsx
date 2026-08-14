@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, Wallet, ExternalLink, ShieldCheck, Link2, Zap, AlertCircle, Loader2, Smartphone } from "lucide-react";
+import { X, Wallet, ExternalLink, ShieldCheck, Link2, Zap, AlertCircle, Loader2 } from "lucide-react";
 import { useConnect } from "wagmi";
 
 interface WalletModalProps {
@@ -24,52 +24,15 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
       window.localStorage.removeItem("grow_wallet_disconnected");
     }
 
-    const isMobile = typeof window !== "undefined" && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const hasInjected = typeof window !== "undefined" && Boolean((window as any).ethereum);
-
-    // Mobile Deep Linking for Native Wallet Apps (MetaMask, OKX, Bitget)
-    if (isMobile && !hasInjected) {
-      const currentHostAndPath = `${window.location.host}${window.location.pathname}${window.location.search}`;
-      const fullUrl = window.location.href;
-
-      if (connector.id === "metaMask") {
-        window.location.href = `https://metamask.app.link/dapp/${currentHostAndPath}`;
-        onClose();
-        return;
-      }
-
-      if (connector.id === "okx") {
-        window.location.href = `okx://wallet/dapp/details?dappUrl=${encodeURIComponent(fullUrl)}`;
-        setTimeout(() => {
-          window.location.href = `https://www.okx.com/download`;
-        }, 1500);
-        onClose();
-        return;
-      }
-
-      if (connector.id === "bitget") {
-        window.location.href = `https://bkcode.vip/dapp?url=${encodeURIComponent(fullUrl)}`;
-        onClose();
-        return;
-      }
-    }
-
     try {
-      // Find matching Wagmi connector or fallback to WalletConnect for mobile app selection
-      const targetConnector = connectors.find((c) => c.id === connector.id) || 
-                              connectors.find((c) => c.id === "walletConnect") || 
-                              connectors[0];
-
-      if (targetConnector) {
-        await connectAsync({ connector: targetConnector });
-        onClose();
-      }
+      await connectAsync({ connector });
+      onClose();
     } catch (err: any) {
       console.error("Wallet connection error:", err);
       if (err?.message?.includes("rejected") || err?.message?.includes("User denied")) {
         setErrorMessage("Wallet connection request was declined.");
-      } else if (!hasInjected && (connector.id === "injected" || connector.id === "metaMask")) {
-        setErrorMessage("No Web3 wallet extension found. Tap 'WalletConnect' to connect your mobile wallet app.");
+      } else if (err?.name === "ConnectorNotFoundError" || err?.message?.includes("not found")) {
+        setErrorMessage("Wallet provider not detected in browser. Try selecting WalletConnect.");
       } else {
         setErrorMessage(err?.shortMessage || err?.message || "Failed to connect wallet.");
       }
@@ -78,53 +41,53 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
     }
   };
 
-  // Custom List of Supported Mobile & Desktop Wallets
-  const walletList = [
-    {
-      id: "okx",
-      title: "OKX Wallet",
-      desc: "Connect OKX Mobile App or OKX Browser Extension on X Layer",
+  const getWalletDetails = (connector: any) => {
+    const name = (connector.name || "").toLowerCase();
+    if (name.includes("metamask")) {
+      return {
+        title: "MetaMask",
+        desc: "Connect to your MetaMask browser extension or in-app browser",
+        icon: <Wallet className="w-5 h-5 text-[#F7931A]" />,
+        iconBg: "bg-[#F6C61A]/25",
+        badge: "Popular",
+        badgeBg: "bg-[#F6C61A] text-[#15121F]",
+      };
+    }
+    if (name.includes("walletconnect")) {
+      return {
+        title: "WalletConnect",
+        desc: "Scan QR code or connect OKX, Bitget, Trust Wallet, Rainbow & 300+ mobile apps",
+        icon: <Link2 className="w-5 h-5 text-[#7C5CFA]" />,
+        iconBg: "bg-[#7C5CFA]/20",
+        badge: "Mobile & QR",
+        badgeBg: "bg-[#7C5CFA] text-white",
+      };
+    }
+    if (name.includes("coinbase")) {
+      return {
+        title: "Coinbase Wallet",
+        desc: "Connect using Coinbase Wallet app or extension",
+        icon: <ShieldCheck className="w-5 h-5 text-[#1FAE52]" />,
+        iconBg: "bg-[#1FAE52]/20",
+        badge: "",
+        badgeBg: "",
+      };
+    }
+    return {
+      title: connector.name || "Browser / OKX Wallet",
+      desc: "Connect using your installed browser extension or wallet provider",
       icon: <Zap className="w-5 h-5 text-[#B4E23F]" />,
       iconBg: "bg-[#15121F]",
-      badge: "Native X Layer",
+      badge: "Injected",
       badgeBg: "bg-[#15121F] text-white",
-    },
-    {
-      id: "metaMask",
-      title: "MetaMask",
-      desc: "Connect to your MetaMask mobile app or browser extension",
-      icon: <Wallet className="w-5 h-5 text-[#F7931A]" />,
-      iconBg: "bg-[#F6C61A]/25",
-      badge: "Popular",
-      badgeBg: "bg-[#F6C61A] text-[#15121F]",
-    },
-    {
-      id: "bitget",
-      title: "Bitget Wallet",
-      desc: "Connect using Bitget Wallet (BitKeep) mobile app or extension",
-      icon: <Smartphone className="w-5 h-5 text-[#1FAE52]" />,
-      iconBg: "bg-[#1FAE52]/20",
-      badge: "Supported",
-      badgeBg: "bg-[#1FAE52] text-white",
-    },
-    {
-      id: "walletConnect",
-      title: "WalletConnect (300+ Mobile Wallets)",
-      desc: "Scan QR code or connect Bitget, OKX, Trust, Rainbow, MetaMask & more",
-      icon: <Link2 className="w-5 h-5 text-[#7C5CFA]" />,
-      iconBg: "bg-[#7C5CFA]/20",
-      badge: "Mobile Best",
-      badgeBg: "bg-[#7C5CFA] text-white",
-    },
-    {
-      id: "coinbaseWallet",
-      title: "Coinbase Wallet",
-      desc: "Connect using Coinbase Wallet mobile app or extension",
-      icon: <ShieldCheck className="w-5 h-5 text-[#1FAE52]" />,
-      iconBg: "bg-[#1FAE52]/20",
-      badge: "",
-      badgeBg: "",
-    },
+    };
+  };
+
+  const displayConnectors = connectors.length > 0 ? connectors : [
+    { id: "injected", name: "Browser / Injected Wallet", uid: "injected-fallback" },
+    { id: "metaMask", name: "MetaMask", uid: "metamask-fallback" },
+    { id: "walletConnect", name: "WalletConnect", uid: "wc-fallback" },
+    { id: "coinbaseWallet", name: "Coinbase Wallet", uid: "coinbase-fallback" },
   ];
 
   return (
@@ -162,39 +125,40 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
           </div>
         )}
 
-        {/* Wallet Connector Options with Mobile App Deep Linking */}
+        {/* Wallet Connector Options */}
         <div className="space-y-3.5">
-          {walletList.map((wallet) => {
-            const isConnectingThis = isPending && pendingConnectorId === wallet.id;
+          {displayConnectors.map((connector) => {
+            const details = getWalletDetails(connector);
+            const isConnectingThis = isPending && pendingConnectorId === (connector.id || connector.uid);
 
             return (
               <button
-                key={wallet.id}
-                onClick={() => handleConnectorClick(wallet)}
+                key={connector.uid || connector.id}
+                onClick={() => handleConnectorClick(connector)}
                 disabled={isPending}
                 className="w-full text-left p-4 rounded-2xl border-3 border-[#15121F] bg-white hover:bg-[#F4F6F0] shadow-[4px_4px_0px_0px_#15121F] hover:shadow-[6px_6px_0px_0px_#15121F] transition-all cursor-pointer flex items-center justify-between group active:translate-y-0.5 active:shadow-[2px_2px_0px_0px_#15121F] disabled:opacity-75"
               >
                 <div className="flex items-center gap-3.5">
-                  <div className={`w-10 h-10 rounded-xl border-2 border-[#15121F] shadow-[2px_2px_0px_0px_#15121F] flex items-center justify-center shrink-0 ${wallet.iconBg}`}>
+                  <div className={`w-10 h-10 rounded-xl border-2 border-[#15121F] shadow-[2px_2px_0px_0px_#15121F] flex items-center justify-center shrink-0 ${details.iconBg}`}>
                     {isConnectingThis ? (
                       <Loader2 className="w-5 h-5 text-[#15121F] animate-spin" />
                     ) : (
-                      wallet.icon
+                      details.icon
                     )}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-display font-extrabold text-sm sm:text-base text-[#15121F] group-hover:text-[#1FAE52] transition-colors">
-                        {wallet.title}
+                        {details.title}
                       </span>
-                      {wallet.badge && (
-                        <span className={`px-2.5 py-0.5 rounded-full border border-[#15121F] text-[10px] font-extrabold shadow-xs ${wallet.badgeBg}`}>
-                          {wallet.badge}
+                      {details.badge && (
+                        <span className={`px-2.5 py-0.5 rounded-full border border-[#15121F] text-[10px] font-extrabold shadow-xs ${details.badgeBg}`}>
+                          {details.badge}
                         </span>
                       )}
                     </div>
                     <p className="text-xs font-semibold text-[#15121F]/70 line-clamp-1">
-                      {isConnectingThis ? "Opening mobile wallet..." : wallet.desc}
+                      {isConnectingThis ? "Connecting wallet..." : details.desc}
                     </p>
                   </div>
                 </div>
