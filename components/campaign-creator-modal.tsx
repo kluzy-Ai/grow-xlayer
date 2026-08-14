@@ -11,7 +11,7 @@ import {
   Send,
   Share2,
   CheckCircle2,
-  ExternalLink,
+  AlertCircle,
 } from "lucide-react";
 
 interface CampaignCreatorModalProps {
@@ -34,7 +34,8 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
   const [minAmount, setMinAmount] = useState("");
   const [maxAmount, setMaxAmount] = useState("");
   
-  // Created campaign success card state
+  // Validation & Success card state
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [createdCampaign, setCreatedCampaign] = useState<any | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const [instagramToast, setInstagramToast] = useState(false);
@@ -55,6 +56,7 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
 
   const handleClose = () => {
     setCreatedCampaign(null);
+    setFormErrors({});
     setTitle("");
     setTotalPool("");
     setSpots("");
@@ -66,34 +68,54 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const errs: Record<string, string> = {};
 
-    // Fallback values if fields are left as placeholder hints
-    const finalTitle = title.trim() || "Community Appreciation Drop";
-    const finalSpots = Number(spots) > 0 ? Number(spots) : 20;
-    const finalAmount = amountType === "fixed" ? (Number(amount) > 0 ? Number(amount) : 0.25) : 0;
-    const finalMin = amountType === "random" ? (Number(minAmount) > 0 ? Number(minAmount) : 0.10) : undefined;
-    const finalMax = amountType === "random" ? (Number(maxAmount) > 0 ? Number(maxAmount) : 0.50) : undefined;
+    if (!title.trim()) {
+      errs.title = "Please enter a campaign title";
+    }
 
-    let computedPool = Number(totalPool);
-    if (!computedPool || computedPool <= 0) {
-      if (amountType === "fixed") {
-        computedPool = finalSpots * (finalAmount as number);
-      } else {
-        computedPool = finalSpots * (((finalMin as number) + (finalMax as number)) / 2);
+    if (!spots || Number(spots) <= 0) {
+      errs.spots = "Please enter recipient spots";
+    }
+
+    if (amountType === "fixed") {
+      if (!amount || Number(amount) <= 0) {
+        errs.amount = "Please enter amount per wallet";
+      }
+    } else {
+      if (!minAmount || Number(minAmount) <= 0) {
+        errs.minAmount = "Please enter min amount";
+      }
+      if (!maxAmount || Number(maxAmount) <= 0) {
+        errs.maxAmount = "Please enter max amount";
+      }
+      if (Number(minAmount) > 0 && Number(maxAmount) > 0 && Number(minAmount) >= Number(maxAmount)) {
+        errs.maxAmount = "Max must be greater than min";
       }
     }
+
+    if (!totalPool || Number(totalPool) <= 0) {
+      errs.totalPool = "Please enter total campaign pool";
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setFormErrors(errs);
+      return; // Stop submission if required fields are blank!
+    }
+
+    setFormErrors({});
 
     const slug = "cmp_" + Math.random().toString(36).substring(2, 8);
     const newCampaign = {
       id: slug,
-      title: finalTitle,
-      totalPool: computedPool.toFixed(2),
+      title: title.trim(),
+      totalPool: Number(totalPool).toFixed(2),
       token,
       amountType,
-      amountPerWallet: amountType === "fixed" ? `${finalAmount} ${token}` : `${finalMin} - ${finalMax} ${token}`,
-      minAmount: finalMin,
-      maxAmount: finalMax,
-      maxSpots: finalSpots,
+      amountPerWallet: amountType === "fixed" ? `${amount} ${token}` : `${minAmount} - ${maxAmount} ${token}`,
+      minAmount: amountType === "random" ? Number(minAmount) : undefined,
+      maxAmount: amountType === "random" ? Number(maxAmount) : undefined,
+      maxSpots: Number(spots),
       telegramLink: `https://t.me/GrowBot?start=${slug}`,
       createdAt: "Just now",
       status: "Active",
@@ -211,7 +233,7 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
                 </div>
                 <button
                   onClick={handleCopyLink}
-                  className="px-3.5 py-1.5 rounded-xl bg-[#B4E23F] text-[#15121F] hover:bg-[#9dcb2a] text-xs font-extrabold shrink-0 flex items-center gap-1 transition-all"
+                  className="px-3.5 py-1.5 rounded-xl bg-[#B4E23F] text-[#15121F] hover:bg-[#9dcb2a] text-xs font-extrabold shrink-0 flex items-center gap-1 transition-all cursor-pointer"
                 >
                   {copiedLink ? (
                     <>
@@ -245,7 +267,7 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
                 {/* X.com / Twitter */}
                 <button
                   onClick={handleShareX}
-                  className="p-3 bg-[#15121F] hover:bg-[#2A2438] text-white rounded-2xl border-2 border-[#15121F] flex flex-col items-center justify-center gap-1 transition-all shadow-sm group"
+                  className="p-3 bg-[#15121F] hover:bg-[#2A2438] text-white rounded-2xl border-2 border-[#15121F] flex flex-col items-center justify-center gap-1 transition-all shadow-sm group cursor-pointer"
                 >
                   <span className="font-extrabold text-sm group-hover:scale-110 transition-transform">𝕏</span>
                   <span className="text-[10px] font-bold">X.com</span>
@@ -254,7 +276,7 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
                 {/* Telegram */}
                 <button
                   onClick={handleShareTelegram}
-                  className="p-3 bg-[#0088cc] hover:bg-[#0077b5] text-white rounded-2xl border-2 border-[#15121F] flex flex-col items-center justify-center gap-1 transition-all shadow-sm group"
+                  className="p-3 bg-[#0088cc] hover:bg-[#0077b5] text-white rounded-2xl border-2 border-[#15121F] flex flex-col items-center justify-center gap-1 transition-all shadow-sm group cursor-pointer"
                 >
                   <Send className="w-4 h-4 group-hover:scale-110 transition-transform" />
                   <span className="text-[10px] font-bold">Telegram</span>
@@ -263,7 +285,7 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
                 {/* WhatsApp */}
                 <button
                   onClick={handleShareWhatsApp}
-                  className="p-3 bg-[#25D366] hover:bg-[#1eb956] text-white rounded-2xl border-2 border-[#15121F] flex flex-col items-center justify-center gap-1 transition-all shadow-sm group"
+                  className="p-3 bg-[#25D366] hover:bg-[#1eb956] text-white rounded-2xl border-2 border-[#15121F] flex flex-col items-center justify-center gap-1 transition-all shadow-sm group cursor-pointer"
                 >
                   <span className="font-extrabold text-xs group-hover:scale-110 transition-transform">💬</span>
                   <span className="text-[10px] font-bold">WhatsApp</span>
@@ -272,7 +294,7 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
                 {/* Instagram */}
                 <button
                   onClick={handleShareInstagram}
-                  className="p-3 bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-white rounded-2xl border-2 border-[#15121F] flex flex-col items-center justify-center gap-1 transition-all shadow-sm group"
+                  className="p-3 bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-white rounded-2xl border-2 border-[#15121F] flex flex-col items-center justify-center gap-1 transition-all shadow-sm group cursor-pointer"
                 >
                   <span className="font-extrabold text-xs group-hover:scale-110 transition-transform">📸</span>
                   <span className="text-[10px] font-bold">Instagram</span>
@@ -314,7 +336,7 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
               </button>
             </div>
 
-            {/* Form */}
+            {/* Form with Clean Inline Validation */}
             <form onSubmit={handleSubmit} noValidate className="space-y-4 text-left">
               {/* Campaign Title */}
               <div>
@@ -324,10 +346,21 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
                 <input
                   type="text"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40 text-sm"
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    if (formErrors.title) setFormErrors((prev) => ({ ...prev, title: "" }));
+                  }}
+                  className={`w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 font-bold text-[#15121F] focus:outline-none placeholder-[#15121F]/40 text-sm ${
+                    formErrors.title ? "border-red-500 bg-red-50/50" : "border-[#15121F]/20 focus:border-[#15121F]"
+                  }`}
                   placeholder="Enter campaign title..."
                 />
+                {formErrors.title && (
+                  <p className="text-xs font-bold text-red-600 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    <span>{formErrors.title}</span>
+                  </p>
+                )}
               </div>
 
               {/* Total Campaign Pool */}
@@ -339,10 +372,21 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
                   type="number"
                   step="0.01"
                   value={totalPool}
-                  onChange={(e) => setTotalPool(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40 text-sm"
+                  onChange={(e) => {
+                    setTotalPool(e.target.value);
+                    if (formErrors.totalPool) setFormErrors((prev) => ({ ...prev, totalPool: "" }));
+                  }}
+                  className={`w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 font-bold text-[#15121F] focus:outline-none placeholder-[#15121F]/40 text-sm ${
+                    formErrors.totalPool ? "border-red-500 bg-red-50/50" : "border-[#15121F]/20 focus:border-[#15121F]"
+                  }`}
                   placeholder="e.g. 5.0"
                 />
+                {formErrors.totalPool && (
+                  <p className="text-xs font-bold text-red-600 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    <span>{formErrors.totalPool}</span>
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -368,12 +412,23 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
                   <input
                     type="number"
                     value={spots}
-                    onChange={(e) => setSpots(e.target.value)}
+                    onChange={(e) => {
+                      setSpots(e.target.value);
+                      if (formErrors.spots) setFormErrors((prev) => ({ ...prev, spots: "" }));
+                    }}
                     min={1}
                     max={1000}
-                    className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40 text-sm"
+                    className={`w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 font-bold text-[#15121F] focus:outline-none placeholder-[#15121F]/40 text-sm ${
+                      formErrors.spots ? "border-red-500 bg-red-50/50" : "border-[#15121F]/20 focus:border-[#15121F]"
+                    }`}
                     placeholder="e.g. 20"
                   />
+                  {formErrors.spots && (
+                    <p className="text-xs font-bold text-red-600 mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5" />
+                      <span>{formErrors.spots}</span>
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -400,10 +455,21 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
                       type="number"
                       step="0.01"
                       value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40 text-sm"
+                      onChange={(e) => {
+                        setAmount(e.target.value);
+                        if (formErrors.amount) setFormErrors((prev) => ({ ...prev, amount: "" }));
+                      }}
+                      className={`w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 font-bold text-[#15121F] focus:outline-none placeholder-[#15121F]/40 text-sm ${
+                        formErrors.amount ? "border-red-500 bg-red-50/50" : "border-[#15121F]/20 focus:border-[#15121F]"
+                      }`}
                       placeholder="e.g. 0.25"
                     />
+                    {formErrors.amount && (
+                      <p className="text-xs font-bold text-red-600 mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        <span>{formErrors.amount}</span>
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-3">
@@ -415,10 +481,21 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
                         type="number"
                         step="0.01"
                         value={minAmount}
-                        onChange={(e) => setMinAmount(e.target.value)}
-                        className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40 text-sm"
+                        onChange={(e) => {
+                          setMinAmount(e.target.value);
+                          if (formErrors.minAmount) setFormErrors((prev) => ({ ...prev, minAmount: "" }));
+                        }}
+                        className={`w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 font-bold text-[#15121F] focus:outline-none placeholder-[#15121F]/40 text-sm ${
+                          formErrors.minAmount ? "border-red-500 bg-red-50/50" : "border-[#15121F]/20 focus:border-[#15121F]"
+                        }`}
                         placeholder="e.g. 0.10"
                       />
+                      {formErrors.minAmount && (
+                        <p className="text-xs font-bold text-red-600 mt-1 flex items-center gap-1">
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          <span>{formErrors.minAmount}</span>
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-[#15121F]/70 mb-1">
@@ -428,10 +505,21 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
                         type="number"
                         step="0.01"
                         value={maxAmount}
-                        onChange={(e) => setMaxAmount(e.target.value)}
-                        className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40 text-sm"
+                        onChange={(e) => {
+                          setMaxAmount(e.target.value);
+                          if (formErrors.maxAmount) setFormErrors((prev) => ({ ...prev, maxAmount: "" }));
+                        }}
+                        className={`w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 font-bold text-[#15121F] focus:outline-none placeholder-[#15121F]/40 text-sm ${
+                          formErrors.maxAmount ? "border-red-500 bg-red-50/50" : "border-[#15121F]/20 focus:border-[#15121F]"
+                        }`}
                         placeholder="e.g. 0.50"
                       />
+                      {formErrors.maxAmount && (
+                        <p className="text-xs font-bold text-red-600 mt-1 flex items-center gap-1">
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          <span>{formErrors.maxAmount}</span>
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}
