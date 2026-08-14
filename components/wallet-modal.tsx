@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { X, Wallet, ExternalLink, ShieldCheck, Link2, Zap } from "lucide-react";
+import React, { useState } from "react";
+import { X, Wallet, ExternalLink, ShieldCheck, Link2, Zap, AlertCircle, Loader2 } from "lucide-react";
 import { useConnect } from "wagmi";
 
 interface WalletModalProps {
@@ -10,12 +10,20 @@ interface WalletModalProps {
 }
 
 export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => {
-  const { connectors, connect } = useConnect();
+  const { connectors, connectAsync, isPending, error: wagmiError } = useConnect();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [pendingConnectorId, setPendingConnectorId] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const handleConnectorClick = (connector: any) => {
-    // If standard browser without window.ethereum and user clicks MetaMask/OKX
+  const handleConnectorClick = async (connector: any) => {
+    setErrorMessage(null);
+    setPendingConnectorId(connector.id || connector.uid);
+
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("grow_wallet_disconnected");
+    }
+
     const isMobile = typeof window !== "undefined" && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     const hasInjected = typeof window !== "undefined" && Boolean((window as any).ethereum);
 
@@ -27,24 +35,35 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
     }
 
     if (isMobile && !hasInjected && connector.id === "injected") {
-      // Deep link for OKX / Injected mobile
       const dappUrl = encodeURIComponent(window.location.href);
       window.location.href = `okx://wallet/dapp/details?dappUrl=${dappUrl}`;
       setTimeout(() => {
-        // Fallback to WalletConnect if deep-link doesn't launch
         const wc = connectors.find((c) => c.id === "walletConnect");
-        if (wc) connect({ connector: wc });
+        if (wc) connectAsync({ connector: wc }).catch(() => {});
       }, 1500);
       onClose();
       return;
     }
 
-    connect({ connector });
-    onClose();
+    try {
+      await connectAsync({ connector });
+      onClose();
+    } catch (err: any) {
+      console.error("Wallet connection error:", err);
+      if (err?.message?.includes("rejected") || err?.message?.includes("User denied")) {
+        setErrorMessage("Wallet connection request was declined.");
+      } else if (!hasInjected && (connector.id === "injected" || connector.id === "metaMask")) {
+        setErrorMessage("No Web3 wallet extension found. Please install OKX Wallet or MetaMask.");
+      } else {
+        setErrorMessage(err?.shortMessage || err?.message || "Failed to connect wallet.");
+      }
+    } finally {
+      setPendingConnectorId(null);
+    }
   };
 
   const getWalletDetails = (connector: any) => {
-    const name = connector.name.toLowerCase();
+    const name = (connector.name || "").toLowerCase();
     if (name.includes("metamask")) {
       return {
         title: "MetaMask",
@@ -76,7 +95,7 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
       };
     }
     return {
-      title: connector.name || "Injected Wallet",
+      title: connector.name || "OKX / Injected Wallet",
       desc: "Connect using your installed browser or mobile Web3 wallet",
       icon: <Zap className="w-5 h-5 text-[#B4E23F]" />,
       iconBg: "bg-[#15121F]",
@@ -84,6 +103,14 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
       badgeBg: "bg-[#15121F] text-white",
     };
   };
+
+  // Fallback items if connectors loading
+  const displayConnectors = connectors.length > 0 ? connectors : [
+    { id: "injected", name: "OKX / Injected Wallet", uid: "injected-fallback" },
+    { id: "metaMask", name: "MetaMask", uid: "metamask-fallback" },
+    { id: "walletConnect", name: "WalletConnect", uid: "wc-fallback" },
+    { id: "coinbaseWallet", name: "Coinbase Wallet", uid: "coinbase-fallback" },
+  ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#15121F]/80 backdrop-blur-md animate-in fade-in duration-200">
@@ -112,19 +139,34 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
           </button>
         </div>
 
-        {/* Wallet Connector Options with Vibrant Neo-Brutalist Cards */}
+        {/* Error Alert Box */}
+        {(errorMessage || wagmiError) && (
+          <div className="p-3.5 bg-red-100 border-3 border-[#15121F] rounded-2xl text-xs font-extrabold text-red-700 flex items-center gap-2.5 shadow-[3px_3px_0px_0px_#15121F] animate-in fade-in">
+            <AlertCircle className="w-5 h-5 text-red-600 shrink-0 stroke-[2.5]" />
+            <span>{errorMessage || wagmiError?.message}</span>
+          </div>
+        )}
+
+        {/* Wallet Connector Options with Robust Handling */}
         <div className="space-y-3.5">
-          {connectors.map((connector) => {
+          {displayConnectors.map((connector) => {
             const details = getWalletDetails(connector);
+            const isConnectingThis = isPending && pendingConnectorId === (connector.id || connector.uid);
+
             return (
               <button
                 key={connector.uid || connector.id}
                 onClick={() => handleConnectorClick(connector)}
-                className="w-full text-left p-4 rounded-2xl border-3 border-[#15121F] bg-white hover:bg-[#F4F6F0] shadow-[4px_4px_0px_0px_#15121F] hover:shadow-[6px_6px_0px_0px_#15121F] transition-all cursor-pointer flex items-center justify-between group active:translate-y-0.5 active:shadow-[2px_2px_0px_0px_#15121F]"
+                disabled={isPending}
+                className="w-full text-left p-4 rounded-2xl border-3 border-[#15121F] bg-white hover:bg-[#F4F6F0] shadow-[4px_4px_0px_0px_#15121F] hover:shadow-[6px_6px_0px_0px_#15121F] transition-all cursor-pointer flex items-center justify-between group active:translate-y-0.5 active:shadow-[2px_2px_0px_0px_#15121F] disabled:opacity-75"
               >
                 <div className="flex items-center gap-3.5">
                   <div className={`w-10 h-10 rounded-xl border-2 border-[#15121F] shadow-[2px_2px_0px_0px_#15121F] flex items-center justify-center shrink-0 ${details.iconBg}`}>
-                    {details.icon}
+                    {isConnectingThis ? (
+                      <Loader2 className="w-5 h-5 text-[#15121F] animate-spin" />
+                    ) : (
+                      details.icon
+                    )}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
@@ -138,17 +180,21 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
                       )}
                     </div>
                     <p className="text-xs font-semibold text-[#15121F]/70 line-clamp-1">
-                      {details.desc}
+                      {isConnectingThis ? "Opening wallet approval..." : details.desc}
                     </p>
                   </div>
                 </div>
-                <ExternalLink className="w-4 h-4 text-[#15121F] group-hover:translate-x-0.5 transition-transform shrink-0 stroke-[2.5]" />
+                {isConnectingThis ? (
+                  <Loader2 className="w-4 h-4 text-[#15121F] animate-spin shrink-0" />
+                ) : (
+                  <ExternalLink className="w-4 h-4 text-[#15121F] group-hover:translate-x-0.5 transition-transform shrink-0 stroke-[2.5]" />
+                )}
               </button>
             );
           })}
         </div>
 
-        {/* Security Notice Banner in Vibrant Emerald Green Tint */}
+        {/* Security Notice Banner in Emerald Green */}
         <div className="p-3.5 bg-[#1FAE52]/10 rounded-2xl border-3 border-[#15121F] shadow-[3px_3px_0px_0px_#15121F] text-xs font-bold text-[#15121F] flex items-center gap-2.5">
           <ShieldCheck className="w-5 h-5 text-[#1FAE52] shrink-0 stroke-[2.5]" />
           <span>

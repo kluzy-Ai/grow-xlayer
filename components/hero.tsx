@@ -136,30 +136,31 @@ export const Hero: React.FC = () => {
             <div className="absolute inset-0 bg-[#8FCB1F] rounded-full blur-3xl opacity-50 transform scale-90" />
 
             {/* Phone Frames Container */}
-            <div className="relative w-full max-w-[540px] flex items-center justify-center">
+            <div className="relative w-full max-w-[540px] flex items-center justify-center overflow-x-hidden p-1 sm:p-2">
               {/* Phone 1: Onboarding Screen (Left, slightly tilted) */}
-              <div className="relative z-20 w-[240px] sm:w-[270px] bg-[#15121F] p-3 rounded-[40px] shadow-2xl border-4 border-[#15121F] transform -rotate-6 hover:rotate-0 transition-transform duration-500">
-                <div className="absolute top-4 left-1/2 -translate-x-1/2 w-20 h-4 bg-[#15121F] rounded-full z-30" />
+              <div className="relative z-20 w-[195px] min-[400px]:w-[240px] sm:w-[270px] bg-[#15121F] p-2.5 sm:p-3 rounded-[36px] sm:rounded-[40px] shadow-2xl border-4 border-[#15121F] transform -rotate-6 hover:rotate-0 transition-transform duration-500 shrink-0">
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 w-16 sm:w-20 h-3.5 sm:h-4 bg-[#15121F] rounded-full z-30" />
 
-                <div className="bg-[#B4E23F] rounded-[32px] pt-8 px-4 pb-6 flex flex-col items-center text-center overflow-hidden border border-[#15121F]/20 min-h-[480px]">
+                <div className="bg-[#B4E23F] rounded-[28px] sm:rounded-[32px] pt-8 px-3.5 sm:px-4 pb-5 sm:pb-6 flex flex-col items-center text-center overflow-hidden border border-[#15121F]/20 min-h-[420px] sm:min-h-[480px]">
                   <div className="my-auto animate-mascot-bob">
-                    <Mascot pose="arrow" size={200} />
+                    <Mascot pose="arrow" size={160} className="sm:hidden" />
+                    <Mascot pose="arrow" size={200} className="hidden sm:block" />
                   </div>
 
-                  <div className="w-full space-y-3 mt-auto">
-                    <h3 className="font-display font-extrabold text-xl text-[#15121F] leading-tight">
+                  <div className="w-full space-y-2.5 sm:space-y-3 mt-auto">
+                    <h3 className="font-display font-extrabold text-base sm:text-xl text-[#15121F] leading-tight">
                       Airdrop Tokens Safely & Fast
                     </h3>
-                    <p className="text-xs text-[#15121F]/70 font-medium">
+                    <p className="text-[11px] sm:text-xs text-[#15121F]/70 font-medium">
                       Collect wallets via Telegram, drop with AI.
                     </p>
 
                     <Link
                       href="/login"
-                      className="w-full btn-pill btn-grow-primary py-2.5 text-xs text-white font-bold flex items-center justify-center gap-2 shadow-md"
+                      className="w-full btn-pill btn-grow-primary py-2 sm:py-2.5 text-xs text-white font-bold flex items-center justify-center gap-1.5 sm:gap-2 shadow-md"
                     >
                       <span>Create Campaign</span>
-                      <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
+                      <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white/20 flex items-center justify-center">
                         <ArrowRight className="w-3 h-3" />
                       </span>
                     </Link>
@@ -168,7 +169,7 @@ export const Hero: React.FC = () => {
               </div>
 
               {/* Phone 2: Dashboard Screen (Right, overlapping) */}
-              <div className="relative z-30 w-[250px] sm:w-[280px] bg-[#15121F] p-3 rounded-[40px] shadow-2xl border-4 border-[#15121F] transform rotate-3 -ml-16 sm:-ml-20 mt-12 hover:rotate-0 transition-transform duration-500">
+              <div className="relative z-30 w-[205px] min-[400px]:w-[250px] sm:w-[280px] bg-[#15121F] p-2.5 sm:p-3 rounded-[36px] sm:rounded-[40px] shadow-2xl border-4 border-[#15121F] transform rotate-3 -ml-10 min-[400px]:-ml-16 sm:-ml-20 mt-10 sm:mt-12 hover:rotate-0 transition-transform duration-500 shrink-0">
                 <div className="absolute top-4 left-1/2 -translate-x-1/2 w-20 h-4 bg-[#15121F] rounded-full z-30" />
 
                 <div className="bg-[#B4E23F] rounded-[32px] pt-8 px-3.5 pb-5 space-y-3 text-[#15121F] border border-[#15121F]/20 min-h-[480px]">
