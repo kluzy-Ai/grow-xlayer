@@ -22,6 +22,7 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
   const [amount, setAmount] = useState("");
   const [minAmount, setMinAmount] = useState("");
   const [maxAmount, setMaxAmount] = useState("");
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   // Auto-calculate Total Campaign Pool based on fixed amount or average random range
   useEffect(() => {
@@ -39,17 +40,35 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setFormErrors({});
+
+    // Fallback values if fields are left as placeholder hints
+    const finalTitle = title.trim() || "Community Appreciation Drop";
+    const finalSpots = Number(spots) > 0 ? Number(spots) : 20;
+    const finalAmount = amountType === "fixed" ? (Number(amount) > 0 ? Number(amount) : 0.25) : 0;
+    const finalMin = amountType === "random" ? (Number(minAmount) > 0 ? Number(minAmount) : 0.10) : undefined;
+    const finalMax = amountType === "random" ? (Number(maxAmount) > 0 ? Number(maxAmount) : 0.50) : undefined;
+
+    let computedPool = Number(totalPool);
+    if (!computedPool || computedPool <= 0) {
+      if (amountType === "fixed") {
+        computedPool = finalSpots * (finalAmount as number);
+      } else {
+        computedPool = finalSpots * (((finalMin as number) + (finalMax as number)) / 2);
+      }
+    }
+
     const slug = "cmp_" + Math.random().toString(36).substring(2, 8);
     const newCampaign = {
       id: slug,
-      title: title || "Community Giveaway",
-      totalPool: Number(totalPool) || 5.0,
+      title: finalTitle,
+      totalPool: computedPool,
       token,
       amountType,
-      amountPerWallet: amountType === "fixed" ? Number(amount) || 0.25 : `${minAmount} - ${maxAmount}`,
-      minAmount: amountType === "random" ? Number(minAmount) : undefined,
-      maxAmount: amountType === "random" ? Number(maxAmount) : undefined,
-      maxSpots: Number(spots) || 20,
+      amountPerWallet: amountType === "fixed" ? finalAmount : `${finalMin} - ${finalMax}`,
+      minAmount: finalMin,
+      maxAmount: finalMax,
+      maxSpots: finalSpots,
       telegramLink: `https://t.me/GrowBot?start=${slug}`,
       createdAt: "Just now",
       status: "Active",
@@ -85,8 +104,8 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4 text-left">
+        {/* Form (no native required attributes to prevent browser tooltips) */}
+        <form onSubmit={handleSubmit} noValidate className="space-y-4 text-left">
           {/* Campaign Title */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-[#15121F]/70 mb-1">
@@ -96,8 +115,7 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              required
-              className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40"
+              className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40 text-sm"
               placeholder="Enter campaign title..."
             />
           </div>
@@ -112,8 +130,7 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
               step="0.01"
               value={totalPool}
               onChange={(e) => setTotalPool(e.target.value)}
-              required
-              className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40"
+              className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40 text-sm"
               placeholder="e.g. 5.0"
             />
           </div>
@@ -126,7 +143,7 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
               <select
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
-                className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none"
+                className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none text-sm"
               >
                 <option value="OKB">OKB (Native)</option>
                 <option value="USDT">USDT (X Layer)</option>
@@ -142,10 +159,9 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
                 type="number"
                 value={spots}
                 onChange={(e) => setSpots(e.target.value)}
-                required
                 min={1}
                 max={1000}
-                className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40"
+                className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40 text-sm"
                 placeholder="e.g. 20"
               />
             </div>
@@ -159,7 +175,7 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
             <select
               value={amountType}
               onChange={(e) => setAmountType(e.target.value as "fixed" | "random")}
-              className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none mb-3"
+              className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none mb-3 text-sm"
             >
               <option value="fixed">Fixed</option>
               <option value="random">Random</option>
@@ -175,8 +191,7 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
                   step="0.01"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  required
-                  className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40"
+                  className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40 text-sm"
                   placeholder="e.g. 0.25"
                 />
               </div>
@@ -191,8 +206,7 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
                     step="0.01"
                     value={minAmount}
                     onChange={(e) => setMinAmount(e.target.value)}
-                    required
-                    className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40"
+                    className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40 text-sm"
                     placeholder="e.g. 0.10"
                   />
                 </div>
@@ -205,8 +219,7 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
                     step="0.01"
                     value={maxAmount}
                     onChange={(e) => setMaxAmount(e.target.value)}
-                    required
-                    className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40"
+                    className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40 text-sm"
                     placeholder="e.g. 0.50"
                   />
                 </div>
