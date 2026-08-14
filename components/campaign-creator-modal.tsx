@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Rocket, ArrowRight, Zap, X } from "lucide-react";
 
 interface CampaignCreatorModalProps {
@@ -15,9 +15,18 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
   onCreate,
 }) => {
   const [title, setTitle] = useState("");
+  const [totalPool, setTotalPool] = useState("");
   const [token, setToken] = useState("OKB");
   const [amount, setAmount] = useState("");
   const [spots, setSpots] = useState("");
+
+  // Auto-calculate Total Campaign Pool when spots or amount per wallet changes
+  useEffect(() => {
+    if (spots && amount) {
+      const calculated = (Number(spots) * Number(amount)).toFixed(2);
+      setTotalPool(calculated);
+    }
+  }, [spots, amount]);
 
   if (!isOpen) return null;
 
@@ -27,6 +36,7 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
     const newCampaign = {
       id: slug,
       title: title || "Community Giveaway",
+      totalPool: Number(totalPool) || 5.0,
       token,
       amountPerWallet: Number(amount) || 0.25,
       maxSpots: Number(spots) || 20,
@@ -41,7 +51,7 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#15121F]/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-[36px] border-4 border-[#15121F] max-w-md w-full p-6 sm:p-8 shadow-2xl space-y-6">
+      <div className="bg-white rounded-[36px] border-4 border-[#15121F] max-w-md w-full p-6 sm:p-8 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[#15121F]/10 pb-4">
           <div className="flex items-center gap-3">
@@ -67,6 +77,7 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4 text-left">
+          {/* Campaign Title */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-[#15121F]/70 mb-1">
               Campaign Title
@@ -78,6 +89,22 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
               required
               className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40"
               placeholder="Enter campaign title..."
+            />
+          </div>
+
+          {/* Total Campaign Pool */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#15121F]/70 mb-1">
+              Total Campaign Pool
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              value={totalPool}
+              onChange={(e) => setTotalPool(e.target.value)}
+              required
+              className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40"
+              placeholder="e.g. 5.0"
             />
           </div>
 
