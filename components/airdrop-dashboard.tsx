@@ -189,6 +189,7 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
   const handleConfirmSignOut = async () => {
     setIsSigningOut(true);
     try {
+      disconnect();
       await signOutCreator();
       const supabase = createClient();
       await supabase.auth.signOut({ scope: "global" });
@@ -225,11 +226,10 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          {isConnected && address && (
-            <div className="flex items-center gap-1.5 bg-[#F4F6F0] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border border-[#15121F]/10 text-[11px] sm:text-xs font-bold text-[#15121F]">
+          {userEmail && (
+            <div className="flex items-center gap-1.5 bg-[#F4F6F0] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border border-[#15121F]/10 text-[11px] sm:text-xs font-bold text-[#15121F] max-w-[200px] sm:max-w-[280px] truncate">
               <User className="w-3.5 h-3.5 text-[#7C5CFA] shrink-0" />
-              <span className="hidden sm:inline">User: {address.slice(0, 6)}...{address.slice(-4)}</span>
-              <span className="sm:hidden">{address.slice(0, 4)}...{address.slice(-2)}</span>
+              <span className="truncate">User: {userEmail}</span>
             </div>
           )}
 
