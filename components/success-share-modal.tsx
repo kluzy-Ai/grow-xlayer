@@ -28,9 +28,10 @@ export const SuccessShareModal: React.FC<SuccessShareModalProps> = ({
 
   const promoImageUrl = "https://grow-xlayer.vercel.app/grow-promo-share.png";
   const campaignUrl = "https://grow-xlayer.vercel.app/claim/cmp_xlayer1";
+  const proofUrl = "https://grow-xlayer.vercel.app/claim/cmp_xlayer1#proof";
 
-  // Crafted professional copywriter intent message
-  const shareText = `🚀 Just successfully executed a batch payout of ${totalAmount} ${tokenSymbol} to ${recipientCount} community members on @XLayerOfficial!\n\n💎 Campaign: ${campaignName}\n⚡ Powered by @GrowXLayer — AI-automated token distribution on OKX X Layer.\n\nJoin our community and claim your rewards here 👇\n${campaignUrl}`;
+  // Crafted professional copywriter intent message featuring public proof link & anonymous crypto privacy guarantee
+  const shareText = `🚀 Batch payout of ${totalAmount} ${tokenSymbol} successfully executed on @XLayerOfficial!\n\n💎 Campaign: ${campaignName}\n⚡ Powered by @GrowXLayer — AI-automated token distribution on OKX X Layer.\n\n🔍 Public Verified Payout Proof (Anonymous Web3 Wallets):\n${proofUrl}\n\nJoin our community & claim your rewards here 👇\n${campaignUrl}`;
 
   // Confetti explosion on open (no auto countdown timer)
   useEffect(() => {
