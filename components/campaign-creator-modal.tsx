@@ -180,7 +180,7 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
                     Campaign Live!
                   </h3>
                   <p className="text-xs text-[#1FAE52] font-extrabold">
-                    Generated Telegram Claim Link
+                    Generated Campaign Link
                   </p>
                 </div>
               </div>
@@ -222,7 +222,7 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
             {/* Generated Link Box */}
             <div className="space-y-2">
               <label className="block text-xs font-bold uppercase tracking-wider text-[#15121F]/70">
-                Unique Telegram Claim Link
+                Telegram Link
               </label>
               <div className="bg-[#15121F] p-3 rounded-2xl border-2 border-[#15121F] flex items-center justify-between gap-2 shadow-inner">
                 <div className="flex items-center gap-2 overflow-hidden">
