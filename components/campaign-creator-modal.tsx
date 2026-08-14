@@ -141,6 +141,7 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
 We just launched "${createdCampaign.title}"!
 
 🎁 Reward: ${createdCampaign.amountPerWallet}
+👥 Max Wallets: ${createdCampaign.maxSpots}
 💰 Pool: ${createdCampaign.totalPool} ${createdCampaign.token}
 ⚡ Instant Claim via Telegram:
 
@@ -154,6 +155,7 @@ Claim your spot now 👇`;
     if (!createdCampaign) return;
     const tgText = `🚀 Live Giveaway: "${createdCampaign.title}" on X Layer!
 🎁 Reward: ${createdCampaign.amountPerWallet}
+👥 Max Wallets: ${createdCampaign.maxSpots}
 💰 Pool: ${createdCampaign.totalPool} ${createdCampaign.token}
 
 Claim your spot now 👇`;
@@ -163,14 +165,14 @@ Claim your spot now 👇`;
 
   const handleShareWhatsApp = () => {
     if (!createdCampaign) return;
-    const waText = `🚀 Live Giveaway: "${createdCampaign.title}" on X Layer!\n🎁 Reward: ${createdCampaign.amountPerWallet}\n💰 Pool: ${createdCampaign.totalPool} ${createdCampaign.token}\n\nClaim your spot now: ${createdCampaign.telegramLink}`;
+    const waText = `🚀 Live Giveaway: "${createdCampaign.title}" on X Layer!\n🎁 Reward: ${createdCampaign.amountPerWallet}\n👥 Max Wallets: ${createdCampaign.maxSpots}\n💰 Pool: ${createdCampaign.totalPool} ${createdCampaign.token}\n\nClaim your spot now: ${createdCampaign.telegramLink}`;
     const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(waText)}`;
     window.open(url, "_blank");
   };
 
   const handleShareInstagram = () => {
     if (!createdCampaign) return;
-    const instaText = `🚀 Live Giveaway: "${createdCampaign.title}" on X Layer!\n🎁 Reward: ${createdCampaign.amountPerWallet}\n💰 Pool: ${createdCampaign.totalPool} ${createdCampaign.token}\n\nClaim link: ${createdCampaign.telegramLink}`;
+    const instaText = `🚀 Live Giveaway: "${createdCampaign.title}" on X Layer!\n🎁 Reward: ${createdCampaign.amountPerWallet}\n👥 Max Wallets: ${createdCampaign.maxSpots}\n💰 Pool: ${createdCampaign.totalPool} ${createdCampaign.token}\n\nClaim link: ${createdCampaign.telegramLink}`;
     navigator.clipboard.writeText(instaText);
     setInstagramToast(true);
     setTimeout(() => setInstagramToast(false), 3000);
