@@ -198,10 +198,13 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({
         </div>
       </div>
 
-      {/* Celebratory 10-Second Confetti & Social Share Popup */}
+      {/* Celebratory Confetti & Social Share Popup */}
       <SuccessShareModal
         isOpen={isShareModalOpen}
-        onClose={() => setIsShareModalOpen(false)}
+        onClose={() => {
+          setIsShareModalOpen(false);
+          onClose();
+        }}
         campaignName={campaign.name}
         totalAmount={campaignBudget}
         tokenSymbol={campaign.token}

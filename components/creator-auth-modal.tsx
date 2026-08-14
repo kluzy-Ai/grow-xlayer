@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ShieldCheck, Mail, Lock, Building, Eye, EyeOff, ArrowRight, AlertCircle, Shield } from "lucide-react";
+import { ShieldCheck, Mail, Lock, Building, Eye, EyeOff, ArrowRight, AlertCircle, Shield, X } from "lucide-react";
 import { signInCreator, signUpCreator } from "@/app/actions/auth";
 
 interface AuthModalProps {
