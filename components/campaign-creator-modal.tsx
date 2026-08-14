@@ -553,6 +553,8 @@ Claim your spot now 👇`;
                     </div>
                   </div>
                 )}
+              </div>
+
               {/* Live Allocation Error Warning */}
               {(liveAllocationError || formErrors.allocation) && (
                 <div className="p-3.5 bg-red-50 rounded-2xl border-2 border-red-500 text-xs font-bold text-red-700 flex items-start gap-2 animate-in fade-in">
