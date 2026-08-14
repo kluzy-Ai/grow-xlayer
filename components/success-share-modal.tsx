@@ -24,7 +24,6 @@ export const SuccessShareModal: React.FC<SuccessShareModalProps> = ({
   recipientCount,
 }) => {
   const [isCopied, setIsCopied] = useState(false);
-  const [imageCopied, setImageCopied] = useState(false);
 
   const promoImageUrl = "https://grow-xlayer.vercel.app/grow-promo-share.png";
   const campaignUrl = "https://grow-xlayer.vercel.app/claim/cmp_xlayer1";
@@ -33,7 +32,7 @@ export const SuccessShareModal: React.FC<SuccessShareModalProps> = ({
   // Crafted professional copywriter intent message featuring public proof link & anonymous crypto privacy guarantee
   const shareText = `🚀 Batch payout of ${totalAmount} ${tokenSymbol} successfully executed on @XLayerOfficial!\n\n💎 Campaign: ${campaignName}\n⚡ Powered by @GrowXLayer — AI-automated token distribution on OKX X Layer.\n\n🔍 Public Verified Payout Proof (Anonymous Web3 Wallets):\n${proofUrl}\n\nUse GROW to distribute rewards to your communities without manual wallet collection 👇\n${campaignUrl}`;
 
-  // Confetti explosion on open (no auto countdown timer)
+  // Confetti explosion on open
   useEffect(() => {
     if (!isOpen) return;
 
@@ -73,23 +72,11 @@ export const SuccessShareModal: React.FC<SuccessShareModalProps> = ({
     setTimeout(() => setIsCopied(false), 3000);
   };
 
-  const handleCopyText = () => {
-    navigator.clipboard.writeText(shareText);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2500);
-  };
-
-  const handleCopyImageLink = () => {
-    navigator.clipboard.writeText(promoImageUrl);
-    setImageCopied(true);
-    setTimeout(() => setImageCopied(false), 2500);
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#15121F]/80 backdrop-blur-md animate-in fade-in duration-200">
       <div className="bg-white rounded-[32px] sm:rounded-[40px] border-4 border-[#15121F] shadow-[14px_14px_0px_0px_#15121F] max-w-lg w-full overflow-hidden space-y-5 p-5 sm:p-7 relative max-h-[92vh] overflow-y-auto">
         
-        {/* Top Header with Status Badge & Close Button (No Countdown Timer) */}
+        {/* Top Header with Status Badge & Close Button */}
         <div className="flex items-center justify-between border-b-3 border-[#15121F] pb-3.5">
           <div className="flex items-center gap-2">
             <span className="text-xs bg-[#1FAE52] text-white font-extrabold px-3 py-1 rounded-full flex items-center gap-2 border-2 border-[#15121F] shadow-[2px_2px_0px_0px_#15121F]">
@@ -178,54 +165,15 @@ export const SuccessShareModal: React.FC<SuccessShareModalProps> = ({
           {/* Instagram */}
           <button
             onClick={shareOnInstagram}
-            className="py-3.5 px-2 rounded-2xl bg-gradient-to-r from-[#833ab4] via-[#fd1d1d] to-[#fcb045] text-white font-extrabold text-xs border-3 border-[#15121F] shadow-[4px_4px_0px_0px_#15121F] flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-transform hover:translate-y-0.5 active:translate-y-1"
+            className="py-3.5 px-2 rounded-2xl bg-gradient-to-r from-[#833ab4] via-[#fd1d1d] to-[#fcb045] text-white font-extrabold text-xs border-3 border-[#15121F] shadow-[4px_4px_0px_0px_#15121F] flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-transform hover:translate-y-0.5 active:translate-y-1 relative"
           >
             <Copy className="w-4 h-4" />
-            <span>Instagram</span>
-          </button>
-        </div>
-
-        {/* Copywriter Intent Message Box */}
-        <div className="bg-[#F4F6F0] p-4 rounded-[24px] border-3 border-[#15121F] shadow-[4px_4px_0px_0px_#15121F] space-y-2.5 relative">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#15121F]/70">
-              Copywriter Intent Message
-            </span>
-            <button
-              onClick={handleCopyText}
-              className="text-[11px] font-extrabold text-[#7C5CFA] hover:underline flex items-center gap-1 cursor-pointer"
-            >
-              <Copy className="w-3.5 h-3.5" />
-              <span>{isCopied ? "Copied!" : "Copy Text"}</span>
-            </button>
-          </div>
-          <p className="text-xs font-semibold text-[#15121F] bg-white p-3.5 rounded-2xl border-2 border-[#15121F] whitespace-pre-line leading-relaxed font-sans shadow-sm">
-            {shareText}
-          </p>
-        </div>
-
-        {/* Official Promotional Banner Box */}
-        <div className="bg-[#7C5CFA]/15 p-4 rounded-[24px] border-3 border-[#15121F] shadow-[4px_4px_0px_0px_#15121F] flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#7C5CFA] text-white flex items-center justify-center font-extrabold border-2 border-[#15121F] shrink-0 shadow-[2px_2px_0px_0px_#15121F]">
-              🖼️
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-extrabold text-[#15121F] truncate">Official Grow Promotional Banner</p>
-              <p className="text-[10px] text-[#15121F]/70 font-mono truncate">{promoImageUrl}</p>
-            </div>
-          </div>
-
-          <button
-            onClick={handleCopyImageLink}
-            className="px-3.5 py-2 rounded-xl bg-[#15121F] hover:bg-[#7C5CFA] text-white font-extrabold text-xs transition-colors border-2 border-[#15121F] cursor-pointer shrink-0"
-          >
-            {imageCopied ? "Copied!" : "Copy Image"}
+            <span>{isCopied ? "Copied!" : "Instagram"}</span>
           </button>
         </div>
 
         {/* Action Button */}
-        <div className="pt-1">
+        <div className="pt-2">
           <button
             onClick={onClose}
             className="w-full py-4 rounded-full bg-[#15121F] hover:bg-[#2A2438] text-white font-extrabold text-xs sm:text-sm border-4 border-[#B4E23F] shadow-[4px_4px_0px_0px_#1FAE52] transition-transform hover:translate-y-0.5 active:translate-y-1 cursor-pointer"
