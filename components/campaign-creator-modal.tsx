@@ -276,41 +276,41 @@ Claim your spot now 👇`;
                 </div>
               )}
 
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {/* X.com / Twitter */}
                 <button
                   onClick={handleShareX}
-                  className="p-3 bg-[#15121F] hover:bg-[#2A2438] text-white rounded-2xl border-2 border-[#15121F] flex flex-col items-center justify-center gap-1 transition-all shadow-sm group cursor-pointer"
+                  className="py-3 px-4 bg-[#15121F] hover:bg-[#2A2438] text-white rounded-2xl border-2 border-[#15121F] flex items-center justify-center gap-2.5 font-extrabold text-xs transition-all shadow-sm hover:scale-[1.02] cursor-pointer"
                 >
-                  <span className="font-extrabold text-sm group-hover:scale-110 transition-transform">𝕏</span>
-                  <span className="text-[10px] font-bold">X.com</span>
+                  <span className="text-base font-black">𝕏</span>
+                  <span>Share on X.com</span>
                 </button>
 
                 {/* Telegram */}
                 <button
                   onClick={handleShareTelegram}
-                  className="p-3 bg-[#0088cc] hover:bg-[#0077b5] text-white rounded-2xl border-2 border-[#15121F] flex flex-col items-center justify-center gap-1 transition-all shadow-sm group cursor-pointer"
+                  className="py-3 px-4 bg-[#0088cc] hover:bg-[#0077b5] text-white rounded-2xl border-2 border-[#15121F] flex items-center justify-center gap-2.5 font-extrabold text-xs transition-all shadow-sm hover:scale-[1.02] cursor-pointer"
                 >
-                  <Send className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                  <span className="text-[10px] font-bold">Telegram</span>
+                  <Send className="w-4 h-4" />
+                  <span>Telegram</span>
                 </button>
 
                 {/* WhatsApp */}
                 <button
                   onClick={handleShareWhatsApp}
-                  className="p-3 bg-[#25D366] hover:bg-[#1eb956] text-white rounded-2xl border-2 border-[#15121F] flex flex-col items-center justify-center gap-1 transition-all shadow-sm group cursor-pointer"
+                  className="py-3 px-4 bg-[#25D366] hover:bg-[#1eb956] text-white rounded-2xl border-2 border-[#15121F] flex items-center justify-center gap-2.5 font-extrabold text-xs transition-all shadow-sm hover:scale-[1.02] cursor-pointer"
                 >
-                  <span className="font-extrabold text-xs group-hover:scale-110 transition-transform">💬</span>
-                  <span className="text-[10px] font-bold">WhatsApp</span>
+                  <span className="text-base">💬</span>
+                  <span>WhatsApp</span>
                 </button>
 
                 {/* Instagram */}
                 <button
                   onClick={handleShareInstagram}
-                  className="p-3 bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-white rounded-2xl border-2 border-[#15121F] flex flex-col items-center justify-center gap-1 transition-all shadow-sm group cursor-pointer"
+                  className="py-3 px-4 bg-gradient-to-r from-[#f09433] via-[#dc2743] to-[#bc1888] text-white rounded-2xl border-2 border-[#15121F] flex items-center justify-center gap-2.5 font-extrabold text-xs transition-all shadow-sm hover:scale-[1.02] cursor-pointer"
                 >
-                  <span className="font-extrabold text-xs group-hover:scale-110 transition-transform">📸</span>
-                  <span className="text-[10px] font-bold">Instagram</span>
+                  <span className="text-base">📸</span>
+                  <span>Instagram</span>
                 </button>
               </div>
             </div>
