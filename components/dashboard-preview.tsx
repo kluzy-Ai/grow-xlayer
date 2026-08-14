@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { Users, Crown, User, Gift, TrendingUp, Home, CreditCard, Sparkles, Coins, ArrowUpRight, Copy, Check, Clock } from "lucide-react";
 
 export const DashboardPreview: React.FC = () => {
   const [copied, setCopied] = useState(false);
@@ -44,8 +45,8 @@ export const DashboardPreview: React.FC = () => {
       title: "Received Daily Streak Bonus",
       amount: "+0.0050 BTC",
       time: "Just now",
-      color: "bg-[#F6C61A]",
-      icon: "🪙",
+      color: "bg-[#F6C61A] text-[#15121F]",
+      icon: <Coins className="w-5 h-5" />,
       isNew: claimedToday,
     },
     {
@@ -53,32 +54,32 @@ export const DashboardPreview: React.FC = () => {
       title: "Received Play Reward",
       amount: "+0.0250 BTC",
       time: "2 hours ago",
-      color: "bg-[#F6C61A]",
-      icon: "🪙",
+      color: "bg-[#F6C61A] text-[#15121F]",
+      icon: <Coins className="w-5 h-5" />,
     },
     {
       type: "sent",
       title: "Sent to Wallet",
       amount: "-0.0100 BTC",
       time: "1 day ago",
-      color: "bg-[#F7931A]",
-      icon: "↗️",
+      color: "bg-[#F7931A] text-white",
+      icon: <ArrowUpRight className="w-5 h-5" />,
     },
     {
       type: "received",
       title: "Referral Bonus (Alex)",
       amount: "+0.0001 BTC",
       time: "2 days ago",
-      color: "bg-[#1FAE52]",
-      icon: "👥",
+      color: "bg-[#1FAE52] text-white",
+      icon: <Users className="w-5 h-5" />,
     },
     {
       type: "received",
       title: "Offer Completed: Puzzle #4",
       amount: "+0.0002 BTC",
       time: "2 days ago",
-      color: "bg-[#7C5CFA]",
-      icon: "👑",
+      color: "bg-[#7C5CFA] text-white",
+      icon: <Crown className="w-5 h-5" />,
     },
   ];
 
@@ -109,8 +110,8 @@ export const DashboardPreview: React.FC = () => {
           {/* Header Bar */}
           <div className="flex items-center justify-between px-2">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-white border-2 border-[#15121F] flex items-center justify-center font-bold text-lg shadow-sm">
-                👤
+              <div className="w-10 h-10 rounded-full bg-white border-2 border-[#15121F] flex items-center justify-center font-bold text-lg shadow-sm text-[#15121F]">
+                <User className="w-5 h-5" />
               </div>
               <div>
                 <h4 className="font-display font-extrabold text-lg text-[#15121F]">
@@ -123,13 +124,23 @@ export const DashboardPreview: React.FC = () => {
             <button
               onClick={handleClaim}
               disabled={claimedToday}
-              className={`btn-pill px-4 py-2 text-xs font-extrabold shadow-sm ${
+              className={`btn-pill px-4 py-2 text-xs font-extrabold shadow-sm flex items-center gap-1.5 ${
                 claimedToday
                   ? "bg-white/60 text-[#15121F]/50 cursor-not-allowed border border-[#15121F]/10"
                   : "btn-grow-primary animate-bounce"
               }`}
             >
-              {claimedToday ? "✓ Claimed Today" : "🎁 Claim Daily +0.005 BTC"}
+              {claimedToday ? (
+                <>
+                  <Check className="w-4 h-4" />
+                  <span>Claimed Today</span>
+                </>
+              ) : (
+                <>
+                  <Gift className="w-4 h-4" />
+                  <span>Claim Daily +0.005 BTC</span>
+                </>
+              )}
             </button>
           </div>
 
@@ -140,7 +151,7 @@ export const DashboardPreview: React.FC = () => {
                 Total Earnings
               </span>
               <div className="flex items-center gap-1.5 bg-[#1FAE52]/10 text-[#1FAE52] px-3 py-1 rounded-full text-xs font-extrabold border border-[#1FAE52]/20">
-                <span>📈</span>
+                <TrendingUp className="w-3.5 h-3.5" />
                 <span>+6.23% (+0.003 BTC)</span>
               </div>
             </div>
@@ -156,9 +167,19 @@ export const DashboardPreview: React.FC = () => {
               </span>
               <button
                 onClick={handleCopy}
-                className="btn-pill bg-white text-[#15121F] px-3 py-1 text-xs border border-[#15121F]/20 hover:bg-[#B4E23F]/30 active:scale-95 transition-all"
+                className="btn-pill bg-white text-[#15121F] px-3 py-1 text-xs border border-[#15121F]/20 hover:bg-[#B4E23F]/30 active:scale-95 transition-all flex items-center gap-1 font-bold"
               >
-                {copied ? "✓ Copied" : "📋 Copy"}
+                {copied ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-[#1FAE52]" />
+                    <span>Copied</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Copy</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -166,15 +187,15 @@ export const DashboardPreview: React.FC = () => {
           {/* 3 Pill Action Buttons */}
           <div className="grid grid-cols-3 gap-3">
             <button className="btn-pill btn-grow-primary py-3.5 flex flex-col items-center gap-1 text-white shadow-md hover:scale-102 transition-transform">
-              <span className="text-xl">🏠</span>
+              <Home className="w-5 h-5" />
               <span className="text-sm font-extrabold">Start</span>
             </button>
             <button className="btn-pill btn-grow-gold py-3.5 flex flex-col items-center gap-1 text-[#15121F] shadow-md hover:scale-102 transition-transform">
-              <span className="text-xl">💳</span>
+              <CreditCard className="w-5 h-5" />
               <span className="text-sm font-extrabold">Withdraw</span>
             </button>
             <button className="btn-pill btn-grow-violet py-3.5 flex flex-col items-center gap-1 text-white shadow-md hover:scale-102 transition-transform">
-              <span className="text-xl">👥</span>
+              <Users className="w-5 h-5" />
               <span className="text-sm font-extrabold">Friends</span>
             </button>
           </div>
@@ -184,16 +205,19 @@ export const DashboardPreview: React.FC = () => {
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
                 <span className="w-7 h-7 rounded-lg bg-[#7C5CFA] flex items-center justify-center text-xs">
-                  ✨
+                  <Sparkles className="w-4 h-4 text-white" />
                 </span>
                 <span className="font-extrabold font-display text-base">
                   {streakPoints.toFixed(2)} / 120 points
                 </span>
               </div>
-              <span className="font-mono text-xs text-white/70 bg-white/10 px-2.5 py-1 rounded-full">
-                ⏳ {String(timeLeft.hours).padStart(2, "0")}:
-                {String(timeLeft.minutes).padStart(2, "0")}:
-                {String(timeLeft.seconds).padStart(2, "0")} Left
+              <span className="font-mono text-xs text-white/70 bg-white/10 px-2.5 py-1 rounded-full flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5" />
+                <span>
+                  {String(timeLeft.hours).padStart(2, "0")}:
+                  {String(timeLeft.minutes).padStart(2, "0")}:
+                  {String(timeLeft.seconds).padStart(2, "0")} Left
+                </span>
               </span>
             </div>
 
@@ -248,7 +272,7 @@ export const DashboardPreview: React.FC = () => {
                 >
                   <div className="flex items-center gap-3">
                     <div
-                      className={`w-10 h-10 rounded-full ${item.color} flex items-center justify-center text-lg border-2 border-[#15121F] shadow-sm`}
+                      className={`w-10 h-10 rounded-full ${item.color} flex items-center justify-center border-2 border-[#15121F] shadow-sm`}
                     >
                       {item.icon}
                     </div>

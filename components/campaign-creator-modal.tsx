@@ -12,6 +12,8 @@ import {
   Share2,
   CheckCircle2,
   AlertCircle,
+  MessageSquare,
+  Camera,
 } from "lucide-react";
 
 interface CampaignCreatorModalProps {
@@ -317,7 +319,7 @@ Claim your spot now 👇`;
                   onClick={handleShareWhatsApp}
                   className="py-3 px-4 bg-[#25D366] hover:bg-[#1eb956] text-white rounded-2xl border-2 border-[#15121F] flex items-center justify-center gap-2.5 font-extrabold text-xs transition-all shadow-sm hover:scale-[1.02] cursor-pointer"
                 >
-                  <span className="text-base">💬</span>
+                  <MessageSquare className="w-4 h-4" />
                   <span>WhatsApp</span>
                 </button>
 
@@ -326,7 +328,7 @@ Claim your spot now 👇`;
                   onClick={handleShareInstagram}
                   className="py-3 px-4 bg-gradient-to-r from-[#f09433] via-[#dc2743] to-[#bc1888] text-white rounded-2xl border-2 border-[#15121F] flex items-center justify-center gap-2.5 font-extrabold text-xs transition-all shadow-sm hover:scale-[1.02] cursor-pointer"
                 >
-                  <span className="text-base">📸</span>
+                  <Camera className="w-4 h-4" />
                   <span>Instagram</span>
                 </button>
               </div>

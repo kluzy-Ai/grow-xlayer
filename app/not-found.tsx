@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Home, LayoutDashboard, ArrowRight, AlertTriangle, Compass } from "lucide-react";
+import { Home, LayoutDashboard, ArrowRight, AlertTriangle, Compass, Coins } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 
@@ -18,7 +18,7 @@ export default function NotFound() {
           <div className="relative inline-block">
             {/* Animated Gold Coin Mascot Container */}
             <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-[#F6C61A] border-4 border-[#15121F] shadow-[4px_4px_0px_0px_#15121F] mx-auto flex items-center justify-center relative animate-bounce">
-              <span className="text-4xl sm:text-5xl select-none">🪙</span>
+              <Coins className="w-12 h-12 text-[#15121F] stroke-[2.5]" />
               {/* Mascot Grin Badge */}
               <div className="absolute -bottom-2 -right-2 bg-[#7C5CFA] text-white p-2 rounded-2xl border-2 border-[#15121F] shadow-sm">
                 <Compass className="w-5 h-5 animate-spin" style={{ animationDuration: "8s" }} />

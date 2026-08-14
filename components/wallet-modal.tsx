@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { X, Wallet, ExternalLink, ShieldCheck } from "lucide-react";
+import { X, Wallet, ExternalLink, ShieldCheck, Link2, Zap } from "lucide-react";
 import { useConnect } from "wagmi";
 
 interface WalletModalProps {
@@ -49,7 +49,7 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
       return {
         title: "MetaMask",
         desc: "Connect to your MetaMask mobile app or browser extension",
-        icon: "🦊",
+        icon: <Wallet className="w-5 h-5 text-[#F6C61A]" />,
         badge: "Popular",
       };
     }
@@ -57,7 +57,7 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
       return {
         title: "WalletConnect",
         desc: "Scan QR or connect OKX, Trust Wallet, Rainbow & 300+ mobile apps",
-        icon: "🔗",
+        icon: <Link2 className="w-5 h-5 text-[#7C5CFA]" />,
         badge: "Mobile Best",
       };
     }
@@ -65,14 +65,14 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
       return {
         title: "Coinbase Wallet",
         desc: "Connect using Coinbase Wallet mobile app or extension",
-        icon: "🛡️",
+        icon: <ShieldCheck className="w-5 h-5 text-[#1FAE52]" />,
         badge: "",
       };
     }
     return {
       title: connector.name || "Injected Wallet",
       desc: "Connect using your installed browser or mobile Web3 wallet",
-      icon: "⚡",
+      icon: <Zap className="w-5 h-5 text-[#7C5CFA]" />,
       badge: "Injected",
     };
   };
@@ -114,7 +114,9 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
                 className="w-full text-left p-4 rounded-2xl border-2 border-[#15121F]/20 hover:border-[#15121F] bg-[#F4F6F0]/60 hover:bg-[#F4F6F0] transition-all cursor-pointer flex items-center justify-between group"
               >
                 <div className="flex items-center gap-3.5">
-                  <span className="text-2xl">{details.icon}</span>
+                  <div className="w-9 h-9 rounded-xl bg-white border-2 border-[#15121F] flex items-center justify-center shrink-0 shadow-xs">
+                    {details.icon}
+                  </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-extrabold text-sm text-[#15121F] group-hover:text-[#7C5CFA] transition-colors">
