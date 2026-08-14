@@ -14,10 +14,10 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
   onClose,
   onCreate,
 }) => {
-  const [title, setTitle] = useState("BuildX Guild OKB Drop");
+  const [title, setTitle] = useState("");
   const [token, setToken] = useState("OKB");
-  const [amount, setAmount] = useState("0.25");
-  const [spots, setSpots] = useState("20");
+  const [amount, setAmount] = useState("");
+  const [spots, setSpots] = useState("");
 
   if (!isOpen) return null;
 
@@ -26,10 +26,10 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
     const slug = "cmp_" + Math.random().toString(36).substring(2, 8);
     const newCampaign = {
       id: slug,
-      title,
+      title: title || "Community Giveaway",
       token,
-      amountPerWallet: Number(amount),
-      maxSpots: Number(spots),
+      amountPerWallet: Number(amount) || 0.25,
+      maxSpots: Number(spots) || 20,
       telegramLink: `https://t.me/GrowBot?start=${slug}`,
       createdAt: "Just now",
       status: "Active",
@@ -76,8 +76,8 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none"
-              placeholder="e.g. Community Appreciation Drop"
+              className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40"
+              placeholder="Enter campaign title..."
             />
           </div>
 
@@ -108,7 +108,8 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
                 required
                 min={1}
                 max={1000}
-                className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none"
+                className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40"
+                placeholder="e.g. 20"
               />
             </div>
           </div>
@@ -123,8 +124,8 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               required
-              className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none"
-              placeholder="0.25"
+              className="w-full px-4 py-3 rounded-2xl bg-[#F4F6F0] border-2 border-[#15121F]/20 font-bold text-[#15121F] focus:border-[#15121F] focus:outline-none placeholder-[#15121F]/40"
+              placeholder="e.g. 0.25"
             />
           </div>
 
