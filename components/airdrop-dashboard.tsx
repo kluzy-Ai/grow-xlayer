@@ -58,6 +58,15 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
   const { disconnect } = useDisconnect();
   const { data: balanceData } = useBalance({ address });
 
+  const [isManuallyDisconnected, setIsManuallyDisconnected] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return window.localStorage.getItem("grow_wallet_disconnected") === "true";
+    }
+    return false;
+  });
+
+  const isWalletConnected = Boolean(isConnected && address && !isManuallyDisconnected);
+
   const [isCreatorModalOpen, setIsCreatorModalOpen] = useState(false);
   const [isTelegramSimulatorOpen, setIsTelegramSimulatorOpen] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
@@ -83,7 +92,7 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
     }
   };
 
-  const treasuryBalance = isConnected && balanceData
+  const treasuryBalance = isWalletConnected && balanceData
     ? Number(formatEther(balanceData.value)).toFixed(2)
     : "0.00";
 
@@ -174,14 +183,21 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
 
   const handleDisconnectWallet = () => {
     disconnect();
+    setIsManuallyDisconnected(true);
     if (typeof window !== "undefined") {
+      window.localStorage.setItem("grow_wallet_disconnected", "true");
       window.localStorage.removeItem("wagmi.store");
       window.localStorage.removeItem("wagmi.recentConnectorId");
       window.localStorage.removeItem("wagmi.connected");
+      window.localStorage.removeItem("wagmi.injected.shimDisconnect");
     }
   };
 
   const handleConnectConnector = (connector: any) => {
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("grow_wallet_disconnected");
+    }
+    setIsManuallyDisconnected(false);
     connect({ connector });
     setIsWalletModalOpen(false);
   };
@@ -264,7 +280,7 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
           </div>
 
           {/* Connected Wallet Address BELOW OKB Balance with Copy Icon */}
-          {isConnected && address ? (
+          {isWalletConnected && address ? (
             <div className="flex items-center gap-2.5 pt-1">
               <span className="text-xs font-extrabold text-[#15121F]/60">Connected:</span>
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#F4F6F0] border-2 border-[#15121F]/20 text-xs font-mono font-extrabold text-[#15121F]">
@@ -295,7 +311,7 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3.5 w-full sm:w-auto pt-2 sm:pt-0">
-          {isConnected ? (
+          {isWalletConnected ? (
             <button
               onClick={handleDisconnectWallet}
               className="px-5 py-3 rounded-xl bg-white hover:bg-gray-100 text-[#15121F] text-xs font-extrabold border-2 border-[#15121F] transition-all cursor-pointer shadow-sm"
