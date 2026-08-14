@@ -64,7 +64,7 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#15121F]/70 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-white rounded-[36px] border-4 border-[#15121F] shadow-[10px_10px_0px_0px_#15121F] max-w-lg w-full overflow-hidden space-y-5 p-6 sm:p-8 relative max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-[36px] border-4 border-[#15121F] shadow-[12px_12px_0px_0px_#15121F] max-w-lg w-full overflow-hidden space-y-5 p-6 sm:p-8 relative max-h-[90vh] overflow-y-auto">
         {/* 1. Header with Campaign Title and Lightning Emoji */}
         <div className="flex items-center justify-between border-b-2 border-[#15121F]/10 pb-3">
           <div className="flex items-center gap-2">
@@ -82,28 +82,27 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({
         </div>
 
         {/* 2. Top Green Total Spend Hero Card with Purple Gas Fee Pill */}
-        <div className="bg-[#1FAE52] rounded-3xl p-5 text-white border-3 border-[#15121F] shadow-[4px_4px_0px_0px_#15121F] space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-extrabold uppercase tracking-wider text-white/90">
-                Total Spend
-              </p>
-              <p className="text-[11px] font-bold text-white/70">Total Distribution</p>
-              <p className="font-display font-extrabold text-3xl sm:text-4xl text-white mt-1">
-                {campaignBudget} {campaign.token}
-              </p>
-            </div>
+        <div className="bg-[#1FAE52] rounded-[28px] p-5 text-white border-3 border-[#15121F] shadow-[4px_4px_0px_0px_#15121F] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-wider text-white/90">
+              Total Spend
+            </p>
+            <p className="text-[11px] font-bold text-white/70">Total Distribution</p>
+            <p className="font-display font-extrabold text-3xl sm:text-4xl text-white mt-0.5">
+              {campaignBudget} {campaign.token}
+            </p>
+          </div>
 
-            {/* Purple Gas Fee & Total Pill */}
-            <div className="bg-[#7C5CFA] rounded-2xl p-3 border-2 border-[#15121F] shadow-[2px_2px_0px_0px_#15121F] text-xs font-bold space-y-1 shrink-0">
-              <div className="flex items-center justify-between gap-3 text-white/90 text-[11px]">
-                <span>Gas Fee Estimate</span>
-                <span className="font-extrabold">~{estimatedGasFee} {campaign.token}</span>
-              </div>
-              <div className="flex items-center justify-between gap-3 text-white text-xs border-t border-white/20 pt-1 font-extrabold">
-                <span>Total Spend</span>
-                <span>{totalSpend} {campaign.token}</span>
-              </div>
+          {/* Purple Gas Fee & Total Pill */}
+          <div className="bg-[#7C5CFA] rounded-2xl px-4 py-2.5 border-2 border-[#15121F] shadow-[2px_2px_0px_0px_#15121F] text-xs font-bold flex items-center justify-between gap-3 shrink-0">
+            <div className="text-left">
+              <p className="text-white/80 text-[10px]">Gas Fee Estimate</p>
+              <p className="font-extrabold text-white text-xs">~{estimatedGasFee} {campaign.token}</p>
+            </div>
+            <div className="h-6 w-[1px] bg-white/30" />
+            <div className="text-right">
+              <p className="text-white/80 text-[10px]">Total Spend</p>
+              <p className="font-extrabold text-white text-xs">{totalSpend} {campaign.token}</p>
             </div>
           </div>
         </div>
@@ -117,8 +116,8 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({
             </span>
           </div>
 
-          {/* Thick Progress Bar */}
-          <div className="w-full bg-[#15121F]/10 rounded-full h-3.5 border-2 border-[#15121F] overflow-hidden p-0.5">
+          {/* Thick Dark Progress Bar */}
+          <div className="w-full bg-gray-200 rounded-full h-3 border-2 border-[#15121F] overflow-hidden">
             <div
               className="bg-[#15121F] h-full rounded-full transition-all duration-500"
               style={{ width: `${Math.min(100, (registeredCount / campaign.maxSpots) * 100)}%` }}
@@ -133,14 +132,14 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({
             <span>OKB Amount</span>
           </div>
 
-          <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
+          <div className="max-h-48 overflow-y-auto space-y-2.5 pr-1">
             {recipientList.map((rec) => (
               <div
                 key={rec.id}
-                className="bg-[#F4F6F0] p-2.5 rounded-2xl border-2 border-[#15121F]/20 flex items-center justify-between gap-3 hover:border-[#15121F] transition-colors"
+                className="bg-[#F4F6F0] p-2 rounded-2xl border-2 border-[#15121F]/20 flex items-center justify-between gap-3 hover:border-[#15121F] transition-colors"
               >
                 {/* Recipient Wallet Address Pill */}
-                <div className="px-3.5 py-1.5 rounded-full bg-white border-2 border-[#15121F] font-mono text-xs font-bold text-[#15121F] truncate flex items-center gap-2">
+                <div className="px-3.5 py-1.5 rounded-full bg-white border-2 border-[#15121F] font-mono text-xs font-bold text-[#15121F] truncate flex items-center gap-2 shadow-sm">
                   <span className="text-[#7C5CFA] font-sans font-extrabold">{rec.username}</span>
                   <span className="text-[#15121F]/40">|</span>
                   <span>{`${rec.address.slice(0, 6)}...${rec.address.slice(-4)}`}</span>
@@ -149,7 +148,7 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({
                 </div>
 
                 {/* Amount on Right */}
-                <span className="font-display font-extrabold text-xs text-[#15121F] shrink-0">
+                <span className="font-display font-extrabold text-xs text-[#15121F] shrink-0 pr-1">
                   {campaign.amountPerWallet.toFixed(4)} {campaign.token}
                 </span>
               </div>
