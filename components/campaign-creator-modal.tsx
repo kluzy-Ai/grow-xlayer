@@ -185,8 +185,8 @@ Claim your spot now 👇`;
             {/* Header */}
             <div className="flex items-center justify-between border-b border-[#15121F]/10 pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-[#1FAE52] text-white flex items-center justify-center font-bold shrink-0 shadow-md">
-                  <CheckCircle2 className="w-7 h-7 stroke-[2.5]" />
+                <div className="w-12 h-12 rounded-full bg-[#F6C61A] text-[#15121F] border-2 border-[#15121F] flex items-center justify-center font-bold shrink-0 shadow-md">
+                  <Zap className="w-6 h-6 fill-current text-[#15121F]" />
                 </div>
                 <div>
                   <h3 className="font-display font-extrabold text-xl text-[#15121F]">
@@ -329,8 +329,8 @@ Claim your spot now 👇`;
             {/* Header */}
             <div className="flex items-center justify-between border-b border-[#15121F]/10 pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#1FAE52] text-white flex items-center justify-center font-bold">
-                  <Rocket className="w-5 h-5 stroke-[2.5]" />
+                <div className="w-10 h-10 rounded-full bg-[#F6C61A] text-[#15121F] border-2 border-[#15121F] flex items-center justify-center font-bold shrink-0 shadow-md">
+                  <Zap className="w-5 h-5 fill-current text-[#15121F]" />
                 </div>
                 <div>
                   <h3 className="font-display font-extrabold text-xl text-[#15121F]">
