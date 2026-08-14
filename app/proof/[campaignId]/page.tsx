@@ -110,15 +110,13 @@ export default function ProofPage({
 
           {/* Call to Action Button */}
           <div className="pt-2">
-            <a
-              href={`https://t.me/GrowBot?start=${params.campaignId || "cmp_xlayer1"}`}
-              target="_blank"
-              rel="noreferrer"
+            <Link
+              href="/"
               className="w-full py-4 rounded-full bg-[#15121F] hover:bg-[#2A2438] text-white font-extrabold text-sm border-3 border-[#B4E23F] shadow-[4px_4px_0px_0px_#1FAE52] transition-transform hover:scale-[1.01] active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2"
             >
-              <span>Join Next Airdrop via Telegram</span>
+              <span>Explore Grow</span>
               <ArrowRight className="w-4 h-4" />
-            </a>
+            </Link>
           </div>
         </div>
       </section>
