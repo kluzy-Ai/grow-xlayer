@@ -320,7 +320,7 @@ Claim your spot now 👇`;
               onClick={handleClose}
               className="w-full btn-pill bg-[#15121F] hover:bg-[#2A2438] py-3.5 text-sm font-extrabold text-white shadow-lg cursor-pointer"
             >
-              Done & Return to Dashboard
+              Return to Dashboard
             </button>
           </div>
         ) : (
