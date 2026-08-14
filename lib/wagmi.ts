@@ -1,5 +1,6 @@
 import { defineChain } from "viem";
 import { http, createConfig } from "wagmi";
+import { injected, metaMask } from "wagmi/connectors";
 
 export const xLayerTestnet = defineChain({
   id: 1952,
@@ -45,6 +46,15 @@ export const xLayerMainnet = defineChain({
 
 export const wagmiConfig = createConfig({
   chains: [xLayerTestnet, xLayerMainnet],
+  connectors: [
+    injected(),
+    metaMask({
+      dappMetadata: {
+        name: "Grow",
+        url: "https://grow-xlayer.vercel.app",
+      },
+    }),
+  ],
   transports: {
     [xLayerTestnet.id]: http(),
     [xLayerMainnet.id]: http(),

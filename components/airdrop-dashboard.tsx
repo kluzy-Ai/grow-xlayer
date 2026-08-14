@@ -150,15 +150,15 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-6">
-      {/* 1. TOP NAVBAR / HEADER BAR (Exact Reference Image Style) */}
+      {/* 1. PRIMARY DASHBOARD HEADER BAR */}
       <div className="bg-white rounded-3xl p-4 border-4 border-[#15121F] shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[#15121F] text-white flex items-center justify-center font-extrabold text-xs">
-              <Layers className="w-4 h-4 text-[#B4E23F]" />
+            <div className="w-8 h-8 rounded-full bg-[#F6C61A] text-[#15121F] border-2 border-[#15121F] flex items-center justify-center font-bold">
+              <Zap className="w-4 h-4 fill-current text-[#15121F]" />
             </div>
             <span className="font-display font-extrabold text-lg text-[#15121F]">
-              Grow on OKX
+              Grow
             </span>
           </div>
           <span className="text-[#15121F]/30 font-bold">|</span>
@@ -168,10 +168,12 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-[#F4F6F0] px-3 py-1.5 rounded-full border border-[#15121F]/10 text-xs font-bold text-[#15121F]">
-            <User className="w-4 h-4 text-[#7C5CFA]" />
-            <span>User: {displayAddress}</span>
-          </div>
+          {isConnected && address && (
+            <div className="flex items-center gap-2 bg-[#F4F6F0] px-3 py-1.5 rounded-full border border-[#15121F]/10 text-xs font-bold text-[#15121F]">
+              <User className="w-4 h-4 text-[#7C5CFA]" />
+              <span>User: {address.slice(0, 6)}...{address.slice(-4)}</span>
+            </div>
+          )}
 
           {isConnected ? (
             <button
@@ -204,69 +206,53 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
         </div>
       </div>
 
-      {/* 2. TOP STATS GRID: Treasury, Protocol Health, APY % (Exact Reference Image Style) */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        {/* X Layer Treasury Card */}
-        <div className="md:col-span-6 bg-white rounded-3xl p-6 border-4 border-[#15121F] shadow-lg flex flex-col justify-between space-y-4">
-          <div className="flex items-center justify-between border-b-2 border-[#15121F]/10 pb-3">
+      {/* 2. TOP TREASURY CARD (Full Width - Protocol & APY Cards Removed) */}
+      <div className="bg-white rounded-3xl p-6 border-4 border-[#15121F] shadow-lg flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
             <h3 className="font-display font-extrabold text-xl text-[#15121F]">
               X Layer Treasury
             </h3>
-            <CreditCard className="w-5 h-5 text-[#15121F]" />
+            <span className="px-2.5 py-0.5 rounded-full bg-[#15121F] text-white text-[10px] font-extrabold">
+              Chain ID 1952
+            </span>
           </div>
 
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs font-bold text-[#15121F]">
-              <span>OKB Balance</span>
-              <span className="px-2.5 py-0.5 rounded-full bg-[#15121F] text-white text-[10px] font-extrabold">
-                Chain ID 1952
-              </span>
-            </div>
-            <div className="font-display font-extrabold text-3xl sm:text-4xl text-[#15121F]">
+          <div className="flex items-baseline gap-2">
+            <span className="text-xs font-bold text-[#15121F]/60">OKB Balance:</span>
+            <span className="font-display font-extrabold text-3xl sm:text-4xl text-[#15121F]">
               {treasuryBalance} OKB
-            </div>
+            </span>
           </div>
+        </div>
 
-          <div className="flex items-center gap-3 pt-2">
+        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+          {isConnected ? (
             <button
-              onClick={() => setIsCreatorModalOpen(true)}
-              className="px-5 py-2.5 rounded-xl bg-[#15121F] hover:bg-[#2A2438] text-white text-xs font-extrabold transition-all cursor-pointer"
-            >
-              Deposit
-            </button>
-            <button
-              onClick={() => setIsTelegramSimulatorOpen(true)}
+              onClick={handleDisconnectWallet}
               className="px-5 py-2.5 rounded-xl bg-white hover:bg-gray-100 text-[#15121F] text-xs font-extrabold border-2 border-[#15121F] transition-all cursor-pointer"
             >
-              Withdraw
+              Disconnect Wallet
             </button>
-          </div>
-        </div>
+          ) : (
+            <button
+              onClick={() => {
+                if (connectors.length > 0) {
+                  connect({ connector: connectors[0] });
+                }
+              }}
+              className="px-5 py-2.5 rounded-xl bg-white hover:bg-gray-100 text-[#15121F] text-xs font-extrabold border-2 border-[#15121F] transition-all shadow-sm cursor-pointer"
+            >
+              Connect Wallet
+            </button>
+          )}
 
-        {/* Protocol Health Card */}
-        <div className="md:col-span-3 bg-white rounded-3xl p-6 border-4 border-[#15121F] shadow-lg flex flex-col justify-between space-y-2 text-center md:text-left">
-          <span className="font-display font-extrabold text-sm text-[#15121F]">
-            Protocol Health
-          </span>
-          <div className="font-display font-extrabold text-4xl sm:text-5xl text-[#15121F]">
-            98%
-          </div>
-          <span className="text-[11px] font-bold text-[#1FAE52]">
-            Optimal Performance
-          </span>
-        </div>
-
-        {/* APY % Card */}
-        <div className="md:col-span-3 bg-white rounded-3xl p-6 border-4 border-[#15121F] shadow-lg flex flex-col justify-between space-y-2 text-center md:text-left">
-          <span className="font-display font-extrabold text-sm text-[#15121F]">
-            APY %
-          </span>
-          <div className="font-display font-extrabold text-4xl sm:text-5xl text-[#15121F]">
-            7.8%
-          </div>
-          <span className="text-[11px] font-bold text-[#7C5CFA]">
-            Active OKB Rewards
-          </span>
+          <button
+            onClick={() => setIsCreatorModalOpen(true)}
+            className="px-5 py-2.5 rounded-xl bg-[#15121F] hover:bg-[#2A2438] text-white text-xs font-extrabold transition-all cursor-pointer shadow-md"
+          >
+            Create Campaign
+          </button>
         </div>
       </div>
 
