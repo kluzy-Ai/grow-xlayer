@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Wallet,
   Zap,
@@ -40,6 +40,9 @@ interface AirdropDashboardProps {
 
 export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const modalParam = searchParams?.get("modal");
+
   const {
     campaign,
     setCampaign,
@@ -83,6 +86,29 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
   const [activeCampaignFilter, setActiveCampaignFilter] = useState<
     "liquidity" | "ai" | "batch"
   >("liquidity");
+
+  // Synchronize URL search parameters with dashboard popup modals
+  useEffect(() => {
+    if (modalParam === "create-campaign") {
+      setIsCreatorModalOpen(true);
+    } else if (modalParam === "active-campaigns") {
+      setIsCampaignsModalOpen(true);
+    } else if (modalParam === "connect-wallet") {
+      setIsWalletModalOpen(true);
+    } else if (modalParam === "test-bot") {
+      setIsTelegramSimulatorOpen(true);
+    } else if (modalParam === "payout") {
+      setSelectedPayoutCampaign({
+        id: campaign?.id || "cmp_xlayer1",
+        name: campaign?.name || "BuildX OKB Community Giveaway",
+        status: campaign?.status || "Active",
+        amountPerWallet: campaign?.amountPerWallet || 0.25,
+        maxSpots: campaign?.maxSpots || 20,
+        token: campaign?.token || "OKB",
+      });
+      setIsPayoutModalOpen(true);
+    }
+  }, [modalParam, campaign]);
 
   const handleCopyAddress = (addr: string) => {
     if (typeof window !== "undefined" && navigator.clipboard) {
