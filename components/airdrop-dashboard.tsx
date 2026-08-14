@@ -32,6 +32,7 @@ import { CampaignCreatorModal } from "./campaign-creator-modal";
 import { TelegramSimulatorModal } from "./telegram-simulator-modal";
 import { WalletModal } from "./wallet-modal";
 import { PayoutModal } from "./payout-modal";
+import { TransactionHistoryCard } from "./transaction-history-card";
 
 interface AirdropDashboardProps {
   user?: any;
@@ -501,6 +502,9 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
           </table>
         </div>
       </div>
+
+      {/* 5. TRANSACTION HISTORY CARD (PAGINATED LEDGER WITH FILTERS & GROUP RETRY) */}
+      <TransactionHistoryCard />
 
       {/* ALL CAMPAIGNS LIST MODAL */}
       {isCampaignsModalOpen && (
