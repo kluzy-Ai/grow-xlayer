@@ -21,7 +21,7 @@ import {
   Layers,
   Lightbulb,
   CreditCard,
-  LogOut,
+  CheckCircle,
 } from "lucide-react";
 import { useAccount, useBalance, useConnect, useDisconnect } from "wagmi";
 import { formatEther } from "viem";
@@ -58,12 +58,13 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
   const [isCreatorModalOpen, setIsCreatorModalOpen] = useState(false);
   const [isTelegramSimulatorOpen, setIsTelegramSimulatorOpen] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
+  const [isCampaignsModalOpen, setIsCampaignsModalOpen] = useState(false);
   const [isSignOutModalOpen, setIsSignOutModalOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [aiPrompt, setAiPrompt] = useState(
     "Distribute 0.25 OKB to 20 random eligible wallets"
   );
-  const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedLink, setCopiedLink] = useState<string | null>(null);
   const [activeCampaignFilter, setActiveCampaignFilter] = useState<
     "liquidity" | "ai" | "batch"
   >("liquidity");
@@ -74,16 +75,45 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
 
   const userEmail = user?.email || "creator@buildx.xyz";
   const communityName = user?.user_metadata?.community_name || "BuildX Guild";
-  const displayAddress = address
-    ? `${address.slice(0, 6)}...${address.slice(-4)}`
-    : "0x9aBc...f34";
 
-  const handleCopyLink = () => {
-    if (campaign) {
-      navigator.clipboard.writeText(campaign.telegramLink);
-      setCopiedLink(true);
-      setTimeout(() => setCopiedLink(false), 2000);
-    }
+  // List of creator campaigns (Active & Completed) with unique Telegram links
+  const allCampaigns = [
+    {
+      id: campaign?.id || "cmp_xlayer1",
+      name: campaign?.name || "BuildX OKB Community Giveaway",
+      status: campaign?.status || "Active",
+      amountPerWallet: campaign?.amountPerWallet || 0.25,
+      maxSpots: campaign?.maxSpots || 20,
+      token: campaign?.token || "OKB",
+      telegramLink: campaign?.telegramLink || "https://t.me/GrowBot?start=cmp_xlayer1",
+      createdAt: campaign?.createdAt || "Aug 13, 2026",
+    },
+    {
+      id: "cmp_xlayer_phase1",
+      name: "X Layer Guild Airdrop Phase 1",
+      status: "Completed",
+      amountPerWallet: 0.5,
+      maxSpots: 50,
+      token: "OKB",
+      telegramLink: "https://t.me/GrowBot?start=cmp_xlayer_phase1",
+      createdAt: "Aug 10, 2026",
+    },
+    {
+      id: "cmp_xlayer_fund",
+      name: "OKB Community Growth Fund",
+      status: "Active",
+      amountPerWallet: 0.1,
+      maxSpots: 100,
+      token: "OKB",
+      telegramLink: "https://t.me/GrowBot?start=cmp_xlayer_fund",
+      createdAt: "Aug 05, 2026",
+    },
+  ];
+
+  const handleCopyText = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedLink(id);
+    setTimeout(() => setCopiedLink(null), 2000);
   };
 
   const handleAiSubmit = (e: React.FormEvent) => {
@@ -206,7 +236,7 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
         </div>
       </div>
 
-      {/* 2. TOP TREASURY CARD (Full Width - Protocol & APY Cards Removed) */}
+      {/* 2. TOP TREASURY CARD */}
       <div className="bg-white rounded-3xl p-6 border-4 border-[#15121F] shadow-lg flex flex-col sm:flex-row items-center justify-between gap-6">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
@@ -253,14 +283,30 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
           >
             Create Campaign
           </button>
+
+          <button
+            onClick={() => setIsCampaignsModalOpen(true)}
+            className="px-5 py-2.5 rounded-xl bg-[#1FAE52] hover:bg-[#199645] text-white text-xs font-extrabold border-2 border-[#15121F] transition-all cursor-pointer shadow-md flex items-center gap-1.5"
+          >
+            <Layers className="w-4 h-4" />
+            <span>Active Campaigns</span>
+          </button>
         </div>
       </div>
 
-      {/* 3. ACTIVE CAMPAIGNS SECTION (Exact Reference Image Style) */}
+      {/* 3. ACTIVE CAMPAIGNS SECTION */}
       <div className="bg-white rounded-3xl p-6 border-4 border-[#15121F] shadow-lg space-y-4">
-        <h3 className="font-display font-extrabold text-xl text-[#15121F]">
-          Active Campaigns
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="font-display font-extrabold text-xl text-[#15121F]">
+            Active Campaigns
+          </h3>
+          <button
+            onClick={() => setIsCampaignsModalOpen(true)}
+            className="text-xs font-extrabold text-[#7C5CFA] hover:underline"
+          >
+            View All Campaigns ({allCampaigns.length}) →
+          </button>
+        </div>
 
         <div className="flex flex-wrap items-center gap-3">
           {/* Green Campaign Pill */}
@@ -326,10 +372,15 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
-              onClick={handleCopyLink}
+              onClick={() =>
+                handleCopyText(
+                  campaign?.telegramLink || "https://t.me/GrowBot?start=cmp_xlayer1",
+                  "main_link"
+                )
+              }
               className="px-4 py-2 rounded-xl bg-[#15121F] text-white text-xs font-bold hover:bg-[#2A2438] shrink-0"
             >
-              {copiedLink ? "Copied Link!" : "Copy Link"}
+              {copiedLink === "main_link" ? "Copied Link!" : "Copy Link"}
             </button>
             <button
               onClick={() => setIsTelegramSimulatorOpen(true)}
@@ -341,7 +392,7 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
         </div>
       </div>
 
-      {/* 4. LIVE TELEGRAM SUBMISSIONS FEED (Exact Reference Image Style) */}
+      {/* 4. LIVE TELEGRAM SUBMISSIONS FEED */}
       <div className="bg-white rounded-3xl p-6 border-4 border-[#15121F] shadow-lg space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-display font-extrabold text-xl text-[#15121F]">
@@ -406,6 +457,100 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
           </table>
         </div>
       </div>
+
+      {/* ALL CAMPAIGNS LIST MODAL */}
+      {isCampaignsModalOpen && (
+        <div className="fixed inset-0 z-50 bg-[#15121F]/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-[36px] border-4 border-[#15121F] max-w-2xl w-full p-6 sm:p-8 shadow-2xl space-y-6 animate-mascot-bob max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b-2 border-[#15121F]/10 pb-4">
+              <div>
+                <h3 className="font-display font-extrabold text-xl text-[#15121F]">
+                  All Creator Campaigns ({allCampaigns.length})
+                </h3>
+                <p className="text-xs font-medium text-[#15121F]/60">
+                  Active & completed campaigns with unique community Telegram claim links.
+                </p>
+              </div>
+              <button
+                onClick={() => setIsCampaignsModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-[#F4F6F0] text-[#15121F] font-bold border border-[#15121F]/20 hover:bg-[#15121F] hover:text-white transition-colors flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {allCampaigns.map((camp) => (
+                <div
+                  key={camp.id}
+                  className="bg-[#F4F6F0] rounded-2xl p-4 border-2 border-[#15121F]/10 space-y-3"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-display font-extrabold text-base text-[#15121F]">
+                          {camp.name}
+                        </span>
+                        <span
+                          className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${
+                            camp.status === "Active"
+                              ? "bg-[#1FAE52] text-white"
+                              : "bg-[#7C5CFA] text-white"
+                          }`}
+                        >
+                          {camp.status}
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#15121F]/60 font-medium mt-0.5">
+                        Created {camp.createdAt} • Target: {camp.maxSpots} Wallets • Payout: {camp.amountPerWallet} {camp.token}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Telegram Deep Link Box */}
+                  <div className="bg-white p-2.5 rounded-xl border border-[#15121F]/20 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <Send className="w-4 h-4 text-[#7C5CFA] shrink-0" />
+                      <span className="font-mono text-xs text-[#15121F] truncate">
+                        {camp.telegramLink}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handleCopyText(camp.telegramLink, camp.id)}
+                      className="px-3 py-1.5 rounded-lg bg-[#15121F] text-white hover:bg-[#2A2438] text-xs font-bold shrink-0 flex items-center gap-1"
+                    >
+                      {copiedLink === camp.id ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-[#1FAE52]" />
+                          <span>Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>Copy Link</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <button
+                onClick={() => {
+                  setIsCampaignsModalOpen(false);
+                  setIsCreatorModalOpen(true);
+                }}
+                className="btn-pill btn-grow-primary px-6 py-3 text-xs font-extrabold text-white flex items-center gap-2 shadow-lg"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Create New Campaign</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* WALLET CONNECTOR SELECTOR MODAL */}
       {isWalletModalOpen && (
