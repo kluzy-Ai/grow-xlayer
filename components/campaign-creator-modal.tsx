@@ -221,10 +221,9 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
 
           <button
             type="submit"
-            className="w-full btn-pill btn-grow-primary py-3.5 text-sm font-extrabold text-white shadow-lg mt-2 flex items-center justify-center gap-2"
+            className="w-full btn-pill btn-grow-primary py-3.5 text-sm font-extrabold text-white shadow-lg mt-2 flex items-center justify-center cursor-pointer"
           >
             <span>Launch Campaign & Generate Link</span>
-            <ArrowRight className="w-4 h-4" />
           </button>
         </form>
       </div>
