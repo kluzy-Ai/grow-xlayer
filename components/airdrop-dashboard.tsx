@@ -30,6 +30,7 @@ import { signOutCreator } from "@/app/actions/auth";
 import { createClient } from "@/utils/supabase/client";
 import { CampaignCreatorModal } from "./campaign-creator-modal";
 import { TelegramSimulatorModal } from "./telegram-simulator-modal";
+import { WalletModal } from "./wallet-modal";
 
 interface AirdropDashboardProps {
   user?: any;
@@ -65,9 +66,18 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
     "Distribute 0.25 OKB to 20 random eligible wallets"
   );
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
+  const [copiedAddress, setCopiedAddress] = useState(false);
   const [activeCampaignFilter, setActiveCampaignFilter] = useState<
     "liquidity" | "ai" | "batch"
   >("liquidity");
+
+  const handleCopyAddress = (addr: string) => {
+    if (typeof window !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(addr);
+      setCopiedAddress(true);
+      setTimeout(() => setCopiedAddress(false), 2000);
+    }
+  };
 
   const treasuryBalance = isConnected && balanceData
     ? Number(formatEther(balanceData.value)).toFixed(2)
@@ -216,46 +226,69 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
       </div>
 
       {/* 2. TOP TREASURY CARD */}
-      <div className="bg-white rounded-3xl p-6 border-4 border-[#15121F] shadow-lg flex flex-col sm:flex-row items-center justify-between gap-6">
-        <div className="space-y-2">
+      <div className="bg-white rounded-[32px] p-7 sm:p-9 border-4 border-[#15121F] shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+        <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <h3 className="font-display font-extrabold text-xl text-[#15121F]">
+            <h3 className="font-display font-extrabold text-2xl text-[#15121F]">
               X Layer Treasury
             </h3>
-            <span className="px-2.5 py-0.5 rounded-full bg-[#15121F] text-white text-[10px] font-extrabold">
+            <span className="px-3 py-1 rounded-full bg-[#15121F] text-white text-xs font-extrabold tracking-wide">
               Chain ID 1952
             </span>
           </div>
 
-          <div className="flex items-baseline gap-2">
-            <span className="text-xs font-bold text-[#15121F]/60">OKB Balance:</span>
-            <span className="font-display font-extrabold text-3xl sm:text-4xl text-[#15121F]">
+          <div className="flex items-baseline gap-3">
+            <span className="text-xs font-extrabold text-[#15121F]/60 uppercase tracking-wider">
+              OKB Balance:
+            </span>
+            <span className="font-display font-extrabold text-3xl sm:text-4xl md:text-5xl text-[#15121F]">
               {treasuryBalance} OKB
             </span>
           </div>
-        </div>
 
-        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-          {isConnected ? (
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-2 rounded-xl bg-[#F4F6F0] border-2 border-[#15121F]/20 text-xs font-mono font-bold text-[#15121F]">
-                {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : ""}
-              </span>
-              <button
-                onClick={handleDisconnectWallet}
-                className="px-4 py-2.5 rounded-xl bg-white hover:bg-gray-100 text-[#15121F] text-xs font-extrabold border-2 border-[#15121F] transition-all cursor-pointer"
-              >
-                Disconnect
-              </button>
+          {/* Connected Wallet Address BELOW OKB Balance with Copy Icon */}
+          {isConnected && address ? (
+            <div className="flex items-center gap-2.5 pt-1">
+              <span className="text-xs font-extrabold text-[#15121F]/60">Connected:</span>
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#F4F6F0] border-2 border-[#15121F]/20 text-xs font-mono font-extrabold text-[#15121F]">
+                <span>{`${address.slice(0, 6)}...${address.slice(-4)}`}</span>
+                <button
+                  onClick={() => handleCopyAddress(address)}
+                  className="p-1 hover:bg-[#15121F]/10 rounded-lg transition-colors cursor-pointer text-[#15121F]/70 hover:text-[#15121F]"
+                  title="Copy wallet address"
+                >
+                  {copiedAddress ? (
+                    <Check className="w-3.5 h-3.5 text-[#1FAE52]" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
+                </button>
+              </div>
+              {copiedAddress && (
+                <span className="text-[11px] font-bold text-[#1FAE52] animate-in fade-in">
+                  Copied!
+                </span>
+              )}
             </div>
           ) : (
+            <p className="text-xs font-bold text-[#15121F]/50 pt-0.5">
+              Wallet not connected. Connect wallet to view live X Layer balance.
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3.5 w-full sm:w-auto pt-2 sm:pt-0">
+          {isConnected ? (
             <button
-              onClick={() => {
-                if (connectors.length > 0) {
-                  connect({ connector: connectors[0] });
-                }
-              }}
-              className="px-5 py-2.5 rounded-xl bg-white hover:bg-gray-100 text-[#15121F] text-xs font-extrabold border-2 border-[#15121F] transition-all shadow-sm cursor-pointer"
+              onClick={handleDisconnectWallet}
+              className="px-5 py-3 rounded-xl bg-white hover:bg-gray-100 text-[#15121F] text-xs font-extrabold border-2 border-[#15121F] transition-all cursor-pointer shadow-sm"
+            >
+              Disconnect Wallet
+            </button>
+          ) : (
+            <button
+              onClick={() => setIsWalletModalOpen(true)}
+              className="px-5 py-3 rounded-xl bg-white hover:bg-gray-100 text-[#15121F] text-xs font-extrabold border-2 border-[#15121F] transition-all cursor-pointer shadow-sm"
             >
               Connect Wallet
             </button>
@@ -263,14 +296,14 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
 
           <button
             onClick={() => setIsCreatorModalOpen(true)}
-            className="px-5 py-2.5 rounded-xl bg-[#15121F] hover:bg-[#2A2438] text-white text-xs font-extrabold transition-all cursor-pointer shadow-md"
+            className="px-6 py-3 rounded-xl bg-[#15121F] hover:bg-[#2A2438] text-white text-xs font-extrabold transition-all cursor-pointer shadow-md"
           >
             Create Campaign
           </button>
 
           <button
             onClick={() => setIsCampaignsModalOpen(true)}
-            className="px-5 py-2.5 rounded-xl bg-[#1FAE52] hover:bg-[#199645] text-white text-xs font-extrabold border-2 border-[#15121F] transition-all cursor-pointer shadow-md flex items-center gap-1.5"
+            className="px-6 py-3 rounded-xl bg-[#1FAE52] hover:bg-[#199645] text-white text-xs font-extrabold border-2 border-[#15121F] transition-all cursor-pointer shadow-md flex items-center gap-2"
           >
             <Layers className="w-4 h-4" />
             <span>Active Campaigns</span>
@@ -639,6 +672,11 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
           </div>
         </div>
       )}
+      {/* Wallet Selection Modal (Mobile & Desktop) */}
+      <WalletModal
+        isOpen={isWalletModalOpen}
+        onClose={() => setIsWalletModalOpen(false)}
+      />
     </div>
   );
 };

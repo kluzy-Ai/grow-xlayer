@@ -1,6 +1,6 @@
 import { defineChain } from "viem";
 import { http, createConfig } from "wagmi";
-import { injected, metaMask } from "wagmi/connectors";
+import { injected, metaMask, walletConnect, coinbaseWallet } from "wagmi/connectors";
 
 export const xLayerTestnet = defineChain({
   id: 1952,
@@ -44,6 +44,9 @@ export const xLayerMainnet = defineChain({
   testnet: false,
 });
 
+const walletConnectProjectId =
+  process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "3a8170812b534d0ff9d794f19a901d64";
+
 export const wagmiConfig = createConfig({
   chains: [xLayerTestnet, xLayerMainnet],
   connectors: [
@@ -53,6 +56,19 @@ export const wagmiConfig = createConfig({
         name: "Grow",
         url: "https://grow-xlayer.vercel.app",
       },
+    }),
+    walletConnect({
+      projectId: walletConnectProjectId,
+      showQrModal: true,
+      metadata: {
+        name: "Grow — AI Token Giveaways on X Layer",
+        description: "Launch targeted token giveaways, airdrops, and AI reward distributions on X Layer",
+        url: "https://grow-xlayer.vercel.app",
+        icons: ["https://grow-xlayer.vercel.app/grow-logo.svg"],
+      },
+    }),
+    coinbaseWallet({
+      appName: "Grow",
     }),
   ],
   transports: {
