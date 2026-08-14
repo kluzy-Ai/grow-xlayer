@@ -69,9 +69,9 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
     "liquidity" | "ai" | "batch"
   >("liquidity");
 
-  const treasuryBalance = balanceData
+  const treasuryBalance = isConnected && balanceData
     ? Number(formatEther(balanceData.value)).toFixed(2)
-    : "12.50";
+    : "0.00";
 
   const userEmail = user?.email || "creator@buildx.xyz";
   const communityName = user?.user_metadata?.community_name || "BuildX Guild";
@@ -237,12 +237,17 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
 
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
           {isConnected ? (
-            <button
-              onClick={handleDisconnectWallet}
-              className="px-5 py-2.5 rounded-xl bg-white hover:bg-gray-100 text-[#15121F] text-xs font-extrabold border-2 border-[#15121F] transition-all cursor-pointer"
-            >
-              Disconnect Wallet
-            </button>
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-2 rounded-xl bg-[#F4F6F0] border-2 border-[#15121F]/20 text-xs font-mono font-bold text-[#15121F]">
+                {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : ""}
+              </span>
+              <button
+                onClick={handleDisconnectWallet}
+                className="px-4 py-2.5 rounded-xl bg-white hover:bg-gray-100 text-[#15121F] text-xs font-extrabold border-2 border-[#15121F] transition-all cursor-pointer"
+              >
+                Disconnect
+              </button>
+            </div>
           ) : (
             <button
               onClick={() => {
