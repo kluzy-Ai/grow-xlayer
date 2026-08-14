@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, Zap, CheckCircle2, ExternalLink, Users } from "lucide-react";
+import { X, Zap, CheckCircle2, ExternalLink } from "lucide-react";
 import { useAccount } from "wagmi";
 
 interface CampaignItem {
@@ -43,8 +43,7 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({
   const registeredCount =
     campaign.registeredWallets ??
     (campaign.status === "Completed" ? campaign.maxSpots : Math.min(14, campaign.maxSpots));
-  const campaignBudget = (registeredCount * campaign.amountPerWallet).toFixed(2);
-  const maxPoolBudget = (campaign.maxSpots * campaign.amountPerWallet).toFixed(2);
+  const campaignBudget = (registeredCount * campaign.amountPerWallet).toFixed(4);
   const estimatedGasFee = 0.0012;
   const totalSpend = (Number(campaignBudget) + estimatedGasFee).toFixed(4);
 
@@ -65,111 +64,93 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#15121F]/70 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-white rounded-[32px] border-4 border-[#15121F] shadow-[10px_10px_0px_0px_#15121F] max-w-xl w-full overflow-hidden space-y-5 p-6 sm:p-8 relative max-h-[90vh] overflow-y-auto">
-        {/* Neo-Brutalist Header */}
-        <div className="flex items-center justify-between border-b-4 border-[#15121F] pb-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-[#F6C61A] text-[#15121F] border-3 border-[#15121F] shadow-[3px_3px_0px_0px_#15121F] flex items-center justify-center font-extrabold shrink-0">
-              <Zap className="w-6 h-6 fill-[#15121F]" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-display font-extrabold text-xl text-[#15121F]">
-                  {campaign.name}
-                </h3>
-                <span
-                  className={`text-[10px] font-extrabold px-3 py-0.5 rounded-full border-2 border-[#15121F] shadow-[2px_2px_0px_0px_#15121F] ${
-                    campaign.status === "Active"
-                      ? "bg-[#1FAE52] text-white"
-                      : "bg-[#15121F]/20 text-[#15121F]"
-                  }`}
-                >
-                  {campaign.status}
-                </span>
-              </div>
-              <p className="text-xs font-bold text-[#15121F]/70 mt-0.5">
-                Campaign Payout & Transaction Summary
-              </p>
-            </div>
+      <div className="bg-white rounded-[36px] border-4 border-[#15121F] shadow-[10px_10px_0px_0px_#15121F] max-w-lg w-full overflow-hidden space-y-5 p-6 sm:p-8 relative max-h-[90vh] overflow-y-auto">
+        {/* 1. Header with Campaign Title and Lightning Emoji */}
+        <div className="flex items-center justify-between border-b-2 border-[#15121F]/10 pb-3">
+          <div className="flex items-center gap-2">
+            <h3 className="font-display font-extrabold text-xl sm:text-2xl text-[#15121F] tracking-tight">
+              {campaign.name}
+            </h3>
+            <span className="text-xl">⚡</span>
           </div>
-
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-2xl bg-[#F4F6F0] hover:bg-gray-200 text-[#15121F] flex items-center justify-center font-extrabold transition-all border-3 border-[#15121F] shadow-[3px_3px_0px_0px_#15121F] cursor-pointer shrink-0"
+            className="w-9 h-9 rounded-full bg-[#F4F6F0] hover:bg-gray-200 text-[#15121F] flex items-center justify-center font-extrabold border-2 border-[#15121F]/20 cursor-pointer shrink-0 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* 4 Neo-Brutalist Breakdown Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="bg-[#F4F6F0] p-3.5 rounded-2xl border-3 border-[#15121F] shadow-[3px_3px_0px_0px_#15121F]">
-            <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#15121F]/70">
-              Campaign Budget
-            </p>
-            <p className="font-display font-extrabold text-base text-[#15121F] mt-1">
-              {campaignBudget} {campaign.token}
-            </p>
-            <p className="text-[9px] text-[#15121F]/60 font-bold">Max: {maxPoolBudget} {campaign.token}</p>
-          </div>
+        {/* 2. Top Green Total Spend Hero Card with Purple Gas Fee Pill */}
+        <div className="bg-[#1FAE52] rounded-3xl p-5 text-white border-3 border-[#15121F] shadow-[4px_4px_0px_0px_#15121F] space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-wider text-white/90">
+                Total Spend
+              </p>
+              <p className="text-[11px] font-bold text-white/70">Total Distribution</p>
+              <p className="font-display font-extrabold text-3xl sm:text-4xl text-white mt-1">
+                {campaignBudget} {campaign.token}
+              </p>
+            </div>
 
-          <div className="bg-[#F4F6F0] p-3.5 rounded-2xl border-3 border-[#15121F] shadow-[3px_3px_0px_0px_#15121F]">
-            <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#15121F]/70">
-              Registered Wallets
-            </p>
-            <p className="font-display font-extrabold text-base text-[#15121F] mt-1">
-              {registeredCount} / {campaign.maxSpots}
-            </p>
-            <p className="text-[9px] text-[#15121F]/60 font-bold">Wallets Eligible</p>
-          </div>
-
-          <div className="bg-[#7C5CFA]/15 p-3.5 rounded-2xl border-3 border-[#15121F] shadow-[3px_3px_0px_0px_#15121F]">
-            <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#7C5CFA]">
-              Est. Gas Fee
-            </p>
-            <p className="font-display font-extrabold text-base text-[#7C5CFA] mt-1">
-              ~{estimatedGasFee} {campaign.token}
-            </p>
-            <p className="text-[9px] text-[#15121F]/60 font-bold">X Layer Network</p>
-          </div>
-
-          <div className="bg-[#1FAE52] text-white p-3.5 rounded-2xl border-3 border-[#15121F] shadow-[3px_3px_0px_0px_#15121F]">
-            <p className="text-[10px] font-extrabold uppercase tracking-wider text-white/90">
-              Total to Spend
-            </p>
-            <p className="font-display font-extrabold text-base text-white mt-1">
-              {totalSpend} {campaign.token}
-            </p>
-            <p className="text-[9px] text-white/80 font-bold">Incl. Gas Fee</p>
+            {/* Purple Gas Fee & Total Pill */}
+            <div className="bg-[#7C5CFA] rounded-2xl p-3 border-2 border-[#15121F] shadow-[2px_2px_0px_0px_#15121F] text-xs font-bold space-y-1 shrink-0">
+              <div className="flex items-center justify-between gap-3 text-white/90 text-[11px]">
+                <span>Gas Fee Estimate</span>
+                <span className="font-extrabold">~{estimatedGasFee} {campaign.token}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3 text-white text-xs border-t border-white/20 pt-1 font-extrabold">
+                <span>Total Spend</span>
+                <span>{totalSpend} {campaign.token}</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Registered Recipient Wallets */}
-        <div className="space-y-3 pt-1">
-          <div className="flex items-center justify-between">
-            <h4 className="text-xs font-extrabold text-[#15121F] uppercase tracking-wider flex items-center gap-2">
-              <Users className="w-4 h-4 text-[#7C5CFA]" />
-              <span>Registered Recipient Wallets ({recipientList.length})</span>
-            </h4>
-            <span className="text-[10px] font-extrabold text-[#15121F]/70">
-              Payout: {campaign.amountPerWallet} {campaign.token} / wallet
+        {/* 3. Wallets Registered Section with Progress Bar */}
+        <div className="space-y-2 pt-1">
+          <div className="flex items-center justify-between text-xs font-extrabold text-[#15121F]">
+            <span>Wallets Registered</span>
+            <span className="text-[#15121F]/70">
+              {registeredCount} / {campaign.maxSpots} Registered Wallets
             </span>
           </div>
 
-          <div className="max-h-44 overflow-y-auto space-y-2.5 pr-1">
+          {/* Thick Progress Bar */}
+          <div className="w-full bg-[#15121F]/10 rounded-full h-3.5 border-2 border-[#15121F] overflow-hidden p-0.5">
+            <div
+              className="bg-[#15121F] h-full rounded-full transition-all duration-500"
+              style={{ width: `${Math.min(100, (registeredCount / campaign.maxSpots) * 100)}%` }}
+            />
+          </div>
+        </div>
+
+        {/* 4. Recipient List Table (NO Payout Status Column!) */}
+        <div className="space-y-2 pt-1">
+          <div className="flex items-center justify-between text-xs font-extrabold text-[#15121F]/70 uppercase tracking-wider px-1">
+            <span>Recipient List</span>
+            <span>OKB Amount</span>
+          </div>
+
+          <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
             {recipientList.map((rec) => (
               <div
                 key={rec.id}
-                className="bg-[#F4F6F0] p-3 rounded-xl border-2 border-[#15121F] shadow-[2px_2px_0px_0px_#15121F] flex items-center justify-between text-xs"
+                className="bg-[#F4F6F0] p-2.5 rounded-2xl border-2 border-[#15121F]/20 flex items-center justify-between gap-3 hover:border-[#15121F] transition-colors"
               >
-                <div className="flex items-center gap-2.5">
-                  <span className="font-extrabold text-[#7C5CFA]">{rec.username}</span>
-                  <span className="font-mono text-[#15121F]/80 text-[11px]">
-                    {rec.address.slice(0, 8)}...{rec.address.slice(-6)}
-                  </span>
+                {/* Recipient Wallet Address Pill */}
+                <div className="px-3.5 py-1.5 rounded-full bg-white border-2 border-[#15121F] font-mono text-xs font-bold text-[#15121F] truncate flex items-center gap-2">
+                  <span className="text-[#7C5CFA] font-sans font-extrabold">{rec.username}</span>
+                  <span className="text-[#15121F]/40">|</span>
+                  <span>{`${rec.address.slice(0, 6)}...${rec.address.slice(-4)}`}</span>
+                  <span className="text-[#15121F]/40">|</span>
+                  <span>{campaign.amountPerWallet.toFixed(4)} {campaign.token}</span>
                 </div>
-                <span className="px-2.5 py-0.5 rounded-full bg-[#1FAE52] text-white font-extrabold text-[10px] border border-[#15121F]">
-                  {campaign.amountPerWallet} {campaign.token}
+
+                {/* Amount on Right */}
+                <span className="font-display font-extrabold text-xs text-[#15121F] shrink-0">
+                  {campaign.amountPerWallet.toFixed(4)} {campaign.token}
                 </span>
               </div>
             ))}
@@ -178,7 +159,7 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({
 
         {/* Broadcasted Success Alert */}
         {(txHash || isSuccess) && (
-          <div className="p-4 bg-[#1FAE52]/15 rounded-2xl border-3 border-[#15121F] shadow-[3px_3px_0px_0px_#15121F] space-y-2 animate-in fade-in">
+          <div className="p-4 bg-[#1FAE52]/15 rounded-2xl border-2 border-[#15121F] space-y-2 animate-in fade-in">
             <div className="flex items-center gap-2 text-[#15121F] font-extrabold text-sm">
               <CheckCircle2 className="w-5 h-5 text-[#1FAE52]" />
               <span>Batch Distribution Successfully Signed & Broadcasted!</span>
@@ -198,19 +179,12 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({
           </div>
         )}
 
-        {/* Neo-Brutalist Action Buttons */}
-        <div className="pt-2 flex flex-col sm:flex-row items-center gap-3.5">
-          <button
-            onClick={onClose}
-            className="w-full sm:w-1/3 py-3.5 rounded-2xl bg-[#F4F6F0] hover:bg-gray-200 text-[#15121F] font-extrabold text-xs border-3 border-[#15121F] shadow-[4px_4px_0px_0px_#15121F] cursor-pointer transition-transform hover:translate-y-0.5 active:translate-y-1"
-          >
-            Close
-          </button>
-
+        {/* 5. Bottom Sign & Execute Action Button */}
+        <div className="pt-2">
           <button
             onClick={handleSignTransaction}
             disabled={isDistributing}
-            className="w-full sm:w-2/3 py-3.5 rounded-2xl bg-[#15121F] hover:bg-[#2A2438] text-white font-extrabold text-xs border-3 border-[#15121F] shadow-[4px_4px_0px_0px_#1FAE52] transition-transform hover:translate-y-0.5 active:translate-y-1 cursor-pointer flex items-center justify-center gap-2"
+            className="w-full py-4 rounded-full bg-[#15121F] hover:bg-[#2A2438] text-white font-extrabold text-sm border-4 border-[#B4E23F] shadow-lg transition-transform hover:scale-[1.01] active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2"
           >
             {isDistributing ? (
               <>
@@ -218,10 +192,7 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({
                 <span>Signing Transaction on X Layer...</span>
               </>
             ) : (
-              <>
-                <Zap className="w-4 h-4 text-[#F6C61A] fill-[#F6C61A]" />
-                <span>Sign & Execute Distribution ({totalSpend} {campaign.token})</span>
-              </>
+              <span>Sign & Execute Distribution ({totalSpend} {campaign.token})</span>
             )}
           </button>
         </div>
