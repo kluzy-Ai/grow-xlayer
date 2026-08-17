@@ -44,10 +44,15 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({
 
   if (!isOpen || !campaign) return null;
 
+  const numericAmountPerWallet =
+    typeof campaign.amountPerWallet === "number"
+      ? campaign.amountPerWallet
+      : parseFloat(String(campaign.amountPerWallet)) || 0.25;
+
   const registeredCount =
     campaign.registeredWallets ??
     (campaign.status === "Completed" ? campaign.maxSpots : Math.min(14, campaign.maxSpots));
-  const campaignBudget = (registeredCount * campaign.amountPerWallet).toFixed(4);
+  const campaignBudget = (registeredCount * numericAmountPerWallet).toFixed(4);
   const estimatedGasFee = 0.0012;
   const totalSpend = (Number(campaignBudget) + estimatedGasFee).toFixed(4);
 

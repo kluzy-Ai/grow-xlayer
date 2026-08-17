@@ -134,13 +134,15 @@ export const AiCampaignModal: React.FC<AiCampaignModalProps> = ({
 
   const handleLaunchCampaign = () => {
     const slug = "cmp_" + Math.random().toString(36).substring(2, 8);
+    const campaignName = campaign.title.trim() || "AI Campaign";
     const finalCampaign = {
       id: slug,
-      title: campaign.title.trim() || "AI Campaign",
+      title: campaignName,
+      name: campaignName,
       totalPool: Number(campaign.totalBudget).toFixed(2),
       token: campaign.token,
       amountType: campaign.distributionType,
-      amountPerWallet: `${campaign.rewardPerRecipient} ${campaign.token}`,
+      amountPerWallet: Number(campaign.rewardPerRecipient),
       maxSpots: Number(campaign.recipientCount),
       telegramLink: `https://t.me/GrowBot?start=${slug}`,
       createdAt: "Just now",
