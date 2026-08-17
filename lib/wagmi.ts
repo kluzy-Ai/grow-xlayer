@@ -63,7 +63,7 @@ export const wagmiConfig = createConfig({
       qrModalOptions: {
         themeMode: "light",
         themeVariables: {
-          "--w3m-z-index": "9999",
+          "--wcm-z-index": "9999",
         },
       },
       metadata: {
