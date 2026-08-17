@@ -28,6 +28,7 @@ import { formatEther } from "viem";
 import { useAirdrop } from "@/hooks/use-airdrop";
 import { signOutCreator } from "@/app/actions/auth";
 import { createClient } from "@/utils/supabase/client";
+import { AiCampaignModal } from "@/components/ai-campaign-modal";
 import { CampaignCreatorModal } from "./campaign-creator-modal";
 import { TelegramSimulatorModal } from "./telegram-simulator-modal";
 import { WalletModal } from "./wallet-modal";
@@ -71,6 +72,7 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
   const isWalletConnected = Boolean(isConnected && address && !isManuallyDisconnected);
 
   const [isCreatorModalOpen, setIsCreatorModalOpen] = useState(false);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [isTelegramSimulatorOpen, setIsTelegramSimulatorOpen] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [isCampaignsModalOpen, setIsCampaignsModalOpen] = useState(false);
@@ -358,6 +360,14 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
             className="px-6 py-3 rounded-xl bg-[#15121F] hover:bg-[#2A2438] text-white text-xs font-extrabold transition-all cursor-pointer shadow-md"
           >
             Create Campaign
+          </button>
+
+          <button
+            onClick={() => setIsAiModalOpen(true)}
+            className="px-6 py-3 rounded-xl bg-[#7C5CFA] hover:bg-[#6848E4] text-white text-xs font-extrabold border-2 border-[#15121F] transition-all cursor-pointer shadow-md flex items-center gap-2"
+          >
+            <Zap className="w-4 h-4 text-[#B4E23F]" />
+            <span>Create with AI</span>
           </button>
 
           <button
@@ -755,6 +765,13 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
         isDistributing={isDistributing}
         txHash={txHash}
         onConnectWallet={() => setIsWalletModalOpen(true)}
+      />
+
+      {/* AI Campaign Copilot Modal */}
+      <AiCampaignModal
+        isOpen={isAiModalOpen}
+        onClose={() => setIsAiModalOpen(false)}
+        onCreate={handleCreateCampaign}
       />
 
       {/* Wallet Selection Modal (Mobile & Desktop) */}
