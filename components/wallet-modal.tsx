@@ -25,13 +25,41 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
     }
 
     try {
+      const win = typeof window !== "undefined" ? (window as any) : null;
       const injectedConn = connectors.find((c) => c.id === "injected");
       const metaMaskConn = connectors.find((c) => c.id === "metaMask" || c.id === "io.metamask");
       const coinbaseConn = connectors.find((c) => c.id === "coinbaseWallet" || c.id === "coinbaseWalletSDK");
       const walletConnectConn = connectors.find((c) => c.id === "walletConnect");
 
-      const hasInjected = typeof window !== "undefined" && Boolean((window as any).ethereum || (window as any).okxwallet || (window as any).bitkeep);
+      // 1. Direct OKX Wallet Provider request
+      if (walletId === "okx") {
+        if (win && win.okxwallet) {
+          await win.okxwallet.request({ method: "eth_requestAccounts" });
+          onClose();
+          return;
+        }
+      }
 
+      // 2. Direct Bitget (BitKeep) Provider request
+      if (walletId === "bitget") {
+        if (win && (win.bitkeep?.ethereum || win.bitgetWallet)) {
+          const bitgetProvider = win.bitkeep?.ethereum || win.bitgetWallet;
+          await bitgetProvider.request({ method: "eth_requestAccounts" });
+          onClose();
+          return;
+        }
+      }
+
+      // 3. Direct Phantom EVM Provider request
+      if (walletId === "phantom") {
+        if (win && win.phantom?.ethereum) {
+          await win.phantom.ethereum.request({ method: "eth_requestAccounts" });
+          onClose();
+          return;
+        }
+      }
+
+      // 4. Fallback Wagmi Connectors matching selection
       let targetConnector = injectedConn || metaMaskConn || coinbaseConn || walletConnectConn || connectors[0];
 
       if (walletId === "metaMask" && metaMaskConn) {
@@ -40,7 +68,7 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
         targetConnector = coinbaseConn;
       } else if (walletId === "walletConnect" && walletConnectConn) {
         targetConnector = walletConnectConn;
-      } else if (hasInjected && injectedConn) {
+      } else if (injectedConn) {
         targetConnector = injectedConn;
       }
 
@@ -53,9 +81,14 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
       if (err?.message?.includes("rejected") || err?.message?.includes("User denied")) {
         setErrorMessage("Wallet connection request was declined.");
       } else if (err?.name === "ConnectorNotFoundError" || err?.message?.includes("not found")) {
-        setErrorMessage("Selected wallet extension not found in this browser. Please open in your wallet's DApp browser.");
-      } else if (err?.message?.includes("Cannot find module")) {
-        setErrorMessage("Wallet provider module loading. Please tap again to connect.");
+        setErrorMessage("Selected wallet extension not found in browser. Opening WalletConnect...");
+        const wc = connectors.find((c) => c.id === "walletConnect");
+        if (wc) {
+          try {
+            await connectAsync({ connector: wc });
+            onClose();
+          } catch (e) {}
+        }
       } else {
         setErrorMessage(err?.shortMessage || err?.message || "Failed to connect wallet.");
       }
