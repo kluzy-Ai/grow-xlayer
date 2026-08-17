@@ -45,7 +45,7 @@ export const xLayerMainnet = defineChain({
 });
 
 const walletConnectProjectId =
-  process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "3a8170812b534d0ff9d794f19a901d64";
+  process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "8934579c855a805f6b21665a363cb642";
 
 export const wagmiConfig = createConfig({
   chains: [xLayerTestnet, xLayerMainnet],
@@ -60,6 +60,12 @@ export const wagmiConfig = createConfig({
     walletConnect({
       projectId: walletConnectProjectId,
       showQrModal: true,
+      qrModalOptions: {
+        themeMode: "light",
+        themeVariables: {
+          "--w3m-z-index": "9999",
+        },
+      },
       metadata: {
         name: "Grow — AI Token Giveaways on X Layer",
         description: "Launch targeted token giveaways, airdrops, and AI reward distributions on X Layer",
