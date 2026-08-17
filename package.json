@@ -18,6 +18,7 @@
     "next": "16.3.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "@walletconnect/ethereum-provider": "^2.19.0",
     "viem": "^2.55.15",
     "wagmi": "^3.7.6"
   },

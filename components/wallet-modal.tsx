@@ -30,33 +30,32 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
       const coinbaseConn = connectors.find((c) => c.id === "coinbaseWallet" || c.id === "coinbaseWalletSDK");
       const walletConnectConn = connectors.find((c) => c.id === "walletConnect");
 
-      let targetConnector = walletConnectConn || connectors[0];
+      const hasInjected = typeof window !== "undefined" && Boolean((window as any).ethereum || (window as any).okxwallet || (window as any).bitkeep);
+
+      let targetConnector = injectedConn || metaMaskConn || coinbaseConn || walletConnectConn || connectors[0];
 
       if (walletId === "metaMask" && metaMaskConn) {
         targetConnector = metaMaskConn;
       } else if (walletId === "coinbaseWallet" && coinbaseConn) {
         targetConnector = coinbaseConn;
-      } else if (typeof window !== "undefined" && (window as any).ethereum && injectedConn) {
-        // If user has browser extension installed for OKX, Bitget, Trust, Phantom, Rabby
+      } else if (walletId === "walletConnect" && walletConnectConn) {
+        targetConnector = walletConnectConn;
+      } else if (hasInjected && injectedConn) {
         targetConnector = injectedConn;
       }
 
-      await connectAsync({ connector: targetConnector });
-      onClose();
+      if (targetConnector) {
+        await connectAsync({ connector: targetConnector });
+        onClose();
+      }
     } catch (err: any) {
       console.error("Wallet connection error:", err);
       if (err?.message?.includes("rejected") || err?.message?.includes("User denied")) {
         setErrorMessage("Wallet connection request was declined.");
       } else if (err?.name === "ConnectorNotFoundError" || err?.message?.includes("not found")) {
-        setErrorMessage("Selected wallet extension not found. Opening WalletConnect...");
-        // Fallback to WalletConnect QR/Mobile selector
-        const wc = connectors.find((c) => c.id === "walletConnect");
-        if (wc) {
-          try {
-            await connectAsync({ connector: wc });
-            onClose();
-          } catch (e) {}
-        }
+        setErrorMessage("Selected wallet extension not found in this browser. Please open in your wallet's DApp browser.");
+      } else if (err?.message?.includes("Cannot find module")) {
+        setErrorMessage("Wallet provider module loading. Please tap again to connect.");
       } else {
         setErrorMessage(err?.shortMessage || err?.message || "Failed to connect wallet.");
       }
