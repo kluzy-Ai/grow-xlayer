@@ -15,6 +15,7 @@ import {
   MessageSquare,
   Camera,
 } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
 
 interface CampaignCreatorModalProps {
   isOpen: boolean;
@@ -78,7 +79,7 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
     onClose();
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs: Record<string, string> = {};
 
@@ -123,13 +124,16 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
     setFormErrors({});
 
     const slug = "cmp_" + Math.random().toString(36).substring(2, 8);
+    const campaignTitle = title.trim();
     const newCampaign = {
       id: slug,
-      title: title.trim(),
+      title: campaignTitle,
+      name: campaignTitle,
       totalPool: Number(totalPool).toFixed(2),
       token,
       amountType,
-      amountPerWallet: amountType === "fixed" ? `${amount} ${token}` : `${minAmount} - ${maxAmount} ${token}`,
+      amountPerWallet: amountType === "fixed" ? Number(amount) : Number(minAmount),
+      amountPerWalletDisplay: amountType === "fixed" ? `${amount} ${token}` : `${minAmount} - ${maxAmount} ${token}`,
       minAmount: amountType === "random" ? Number(minAmount) : undefined,
       maxAmount: amountType === "random" ? Number(maxAmount) : undefined,
       maxSpots: Number(spots),
@@ -137,6 +141,31 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
       createdAt: "Just now",
       status: "Active",
     };
+
+    // Save campaign directly to Supabase public.campaigns table
+    try {
+      const supabase = createClient();
+      const { data: userData } = await supabase.auth.getUser();
+      const creatorId = userData?.user?.id;
+
+      if (creatorId) {
+        await supabase.from("campaigns").insert([
+          {
+            creator_id: creatorId,
+            slug: slug,
+            title: campaignTitle,
+            token_symbol: token,
+            amount_per_claim: amountType === "fixed" ? Number(amount) : Number(minAmount),
+            total_budget: Number(totalPool) || 0,
+            max_spots: Number(spots) || 20,
+            status: "active",
+            network_chain_id: 1952,
+          },
+        ]);
+      }
+    } catch (err) {
+      console.warn("Supabase campaign insert error:", err);
+    }
 
     onCreate(newCampaign);
     setCreatedCampaign(newCampaign);

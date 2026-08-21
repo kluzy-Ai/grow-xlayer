@@ -22,7 +22,7 @@ export async function generateDistributionPlan(
   prompt: string,
   submissions: WalletSubmission[],
   amountPerWallet: number,
-  tokenSymbol: "OKB" | "USDT"
+  tokenSymbol: "OKB" | "USDT" | string = "OKB"
 ): Promise<AIDistributionPlan> {
   // Simulate AI parsing delay
   await new Promise((res) => setTimeout(res, 800));

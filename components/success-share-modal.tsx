@@ -12,6 +12,8 @@ interface SuccessShareModalProps {
   tokenSymbol: string;
   txHash?: string | null;
   recipientCount: number;
+  campaignId?: string;
+  campaignSlug?: string;
 }
 
 export const SuccessShareModal: React.FC<SuccessShareModalProps> = ({
@@ -22,12 +24,18 @@ export const SuccessShareModal: React.FC<SuccessShareModalProps> = ({
   tokenSymbol,
   txHash,
   recipientCount,
+  campaignId,
+  campaignSlug,
 }) => {
   const [isCopied, setIsCopied] = useState(false);
 
+  const campaignIdentifier = campaignSlug || campaignId || "campaign";
+  const campaignUrl = `https://t.me/GrowXlayerbot?start=${campaignIdentifier}`;
+  const proofUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/proof/${campaignIdentifier}`
+      : `https://grow-xlayer.vercel.app/proof/${campaignIdentifier}`;
   const promoImageUrl = "https://grow-xlayer.vercel.app/grow-promo-share.png";
-  const campaignUrl = "https://t.me/GrowXlayerbot?start=cmp_xlayer1";
-  const proofUrl = "https://grow-xlayer.vercel.app/proof/cmp_xlayer1";
 
   // Crafted professional copywriter intent message featuring public proof link & anonymous crypto privacy guarantee
   const shareText = `🚀 Batch payout of ${totalAmount} ${tokenSymbol} successfully executed on @XLayerOfficial!\n\n💎 Campaign: ${campaignName}\n⚡ Powered by @GrowXLayer — AI-automated token distribution on OKX X Layer.\n\n🔍 Public Verified Payout Proof (Anonymous Web3 Wallets):\n${proofUrl}\n\nUse GROW to distribute rewards to your communities without manual wallet collection 👇\n${campaignUrl}`;

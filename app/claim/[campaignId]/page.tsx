@@ -1,10 +1,12 @@
 import { redirect } from "next/navigation";
 
-export default function ClaimPage({
+export default async function ClaimPage({
   params,
 }: {
-  params: { campaignId: string };
+  params: Promise<{ campaignId: string }> | { campaignId: string };
 }) {
-  // Redirect to Telegram Bot for automated wallet submission or proof page
-  redirect(`https://t.me/GrowXlayerbot?start=${params.campaignId || "cmp_xlayer1"}`);
+  const resolved = await params;
+  const campaignId = resolved?.campaignId;
+  const startQuery = campaignId ? `?start=${campaignId}` : "";
+  redirect(`https://t.me/GrowXlayerbot${startQuery}`);
 }

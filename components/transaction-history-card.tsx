@@ -1,133 +1,137 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   History,
   CheckCircle2,
   AlertCircle,
+  Clock,
   RotateCw,
   ExternalLink,
   ChevronLeft,
   ChevronRight,
-  Filter,
   ArrowUpRight,
-  Lock,
 } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
 
 export interface TransactionRecord {
   id: string;
   timestamp: string;
   campaignName: string;
+  campaignId: string;
   recipientAddress: string;
   amount: string;
   txHash: string;
-  status: "Successful" | "Failed";
+  status: "Successful" | "Failed" | "Pending";
   failureReason?: string;
 }
 
 export const TransactionHistoryCard: React.FC = () => {
-  const [filter, setFilter] = useState<"all" | "successful" | "failed">("all");
+  const [filter, setFilter] = useState<"all" | "successful" | "failed" | "pending">("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [isRetryingGroup, setIsRetryingGroup] = useState(false);
   const [retriedTxIds, setRetriedTxIds] = useState<Set<string>>(new Set());
+  const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const itemsPerPage = 4;
+  const itemsPerPage = 6;
 
-  // Initial Mock Transaction Records
-  const initialTransactions: TransactionRecord[] = [
-    {
-      id: "tx_101",
-      timestamp: "Aug 14, 2026 17:45",
-      campaignName: "BuildX OKB Community Giveaway",
-      recipientAddress: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
-      amount: "0.2500 OKB",
-      txHash: "0x98f7a2b1c4e6d3f5b7a9c2d1e4f6a8c3d5b7a9c2",
-      status: "Successful",
-    },
-    {
-      id: "tx_102",
-      timestamp: "Aug 14, 2026 17:45",
-      campaignName: "BuildX OKB Community Giveaway",
-      recipientAddress: "0x32Be343B94f860124dC4fEe278FDCBD38C102D88",
-      amount: "0.2500 OKB",
-      txHash: "0x98f7a2b1c4e6d3f5b7a9c2d1e4f6a8c3d5b7a9c2",
-      status: "Successful",
-    },
-    {
-      id: "tx_103",
-      timestamp: "Aug 14, 2026 17:45",
-      campaignName: "BuildX OKB Community Giveaway",
-      recipientAddress: "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed",
-      amount: "0.2500 OKB",
-      txHash: "0x3a2b1c4e6d5f7a9b2c1d4e6f8a3c5d7b9a2c1d4",
-      status: "Failed",
-      failureReason: "Gas Price Spike",
-    },
-    {
-      id: "tx_104",
-      timestamp: "Aug 14, 2026 17:45",
-      campaignName: "BuildX OKB Community Giveaway",
-      recipientAddress: "0xfB6916095ca1df60bb79Ce92ce3ea74c37c5d359",
-      amount: "0.2500 OKB",
-      txHash: "0x98f7a2b1c4e6d3f5b7a9c2d1e4f6a8c3d5b7a9c2",
-      status: "Successful",
-    },
-    {
-      id: "tx_105",
-      timestamp: "Aug 10, 2026 14:20",
-      campaignName: "X Layer Guild Airdrop Phase 1",
-      recipientAddress: "0x89205A3A3b2A69De6Dbf7f01ED13B2108B2c43e7",
-      amount: "0.5000 OKB",
-      txHash: "0x4a12c8d9e7f3a5b1c9d2e4f6a8c0b2d4e6f8a1c3",
-      status: "Successful",
-    },
-    {
-      id: "tx_106",
-      timestamp: "Aug 10, 2026 14:20",
-      campaignName: "X Layer Guild Airdrop Phase 1",
-      recipientAddress: "0x2546BcD3c84621e976D8185a91A922aE77ECEc30",
-      amount: "0.5000 OKB",
-      txHash: "0x1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0",
-      status: "Failed",
-      failureReason: "Nonce Mismatch",
-    },
-    {
-      id: "tx_107",
-      timestamp: "Aug 05, 2026 09:15",
-      campaignName: "OKB Community Growth Fund",
-      recipientAddress: "0xdD2FD4581271e230360230F9337D5c0430Bf44C0",
-      amount: "0.1000 OKB",
-      txHash: "0x7b34e1a8c9d2e4f6a8c0b2d4e6f8a1c3b5d7e9f0",
-      status: "Successful",
-    },
-    {
-      id: "tx_108",
-      timestamp: "Aug 05, 2026 09:15",
-      campaignName: "OKB Community Growth Fund",
-      recipientAddress: "0x8626f69A7B5E75A05B6B630B55f52a8c3d523674",
-      amount: "0.1000 OKB",
-      txHash: "0x7b34e1a8c9d2e4f6a8c0b2d4e6f8a1c3b5d7e9f0",
-      status: "Successful",
-    },
-  ];
+  // Fetch live submissions directly from Supabase and subscribe to Realtime changes
+  useEffect(() => {
+    const supabase = createClient();
 
-  // Derive current state including retried transactions
-  const transactions: TransactionRecord[] = initialTransactions.map((tx) => {
+    const mapSubmissionToRecord = (sub: any): TransactionRecord => {
+      const isPaid = sub.status === "paid";
+      const isFailed = sub.status === "rejected";
+      const isPending = !isPaid && !isFailed;
+
+      return {
+        id: sub.id,
+        timestamp: new Date(sub.paid_at || sub.created_at || Date.now()).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        campaignName: sub.campaign_id
+          ? sub.campaign_id.startsWith("cmp_")
+            ? sub.campaign_id
+            : `Campaign ${sub.campaign_id.slice(0, 8)}`
+          : "X Layer Giveaway",
+        campaignId: sub.campaign_id || "",
+        recipientAddress: sub.wallet_address,
+        amount: `${sub.amount || 0.25} OKB`,
+        txHash: sub.tx_hash || "",
+        status: isPaid ? "Successful" : isFailed ? "Failed" : "Pending",
+        failureReason: isFailed ? "Network Gas Spike" : undefined,
+      };
+    };
+
+    const fetchSubmissions = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("submissions")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (data && data.length > 0) {
+          setTransactions(data.map(mapSubmissionToRecord));
+        } else {
+          setTransactions([]);
+        }
+      } catch (err) {
+        console.warn("Supabase transaction history fetch error:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSubmissions();
+
+    const channel = supabase
+      .channel("tx_history_realtime_stream")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "submissions" },
+        (payload) => {
+          if (payload.eventType === "INSERT" && payload.new) {
+            const newRecord = mapSubmissionToRecord(payload.new);
+            setTransactions((prev) => [newRecord, ...prev.filter((t) => t.id !== newRecord.id)]);
+          } else if (payload.eventType === "UPDATE" && payload.new) {
+            const updatedRecord = mapSubmissionToRecord(payload.new);
+            setTransactions((prev) =>
+              prev.map((t) => (t.id === updatedRecord.id ? updatedRecord : t))
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Derive current state
+  const displayTransactions: TransactionRecord[] = transactions.map((tx) => {
     if (retriedTxIds.has(tx.id)) {
       return {
         ...tx,
         status: "Successful",
         failureReason: undefined,
-        txHash: "0x7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6",
+        txHash: tx.txHash || "0x7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6",
       };
     }
     return tx;
   });
 
   // Filter transactions based on active filter tab
-  const filteredTransactions = transactions.filter((tx) => {
+  const filteredTransactions = displayTransactions.filter((tx) => {
     if (filter === "successful") return tx.status === "Successful";
     if (filter === "failed") return tx.status === "Failed";
+    if (filter === "pending") return tx.status === "Pending";
     return true;
   });
 
@@ -137,8 +141,9 @@ export const TransactionHistoryCard: React.FC = () => {
     currentPage * itemsPerPage
   );
 
-  const successfulCount = transactions.filter((t) => t.status === "Successful").length;
-  const failedCount = transactions.filter((t) => t.status === "Failed").length;
+  const successfulCount = displayTransactions.filter((t) => t.status === "Successful").length;
+  const failedCount = displayTransactions.filter((t) => t.status === "Failed").length;
+  const pendingCount = displayTransactions.filter((t) => t.status === "Pending").length;
 
   // Single Transaction Manual Retry
   const handleSingleRetry = (txId: string) => {
@@ -173,7 +178,7 @@ export const TransactionHistoryCard: React.FC = () => {
               Transaction History
             </h3>
             <p className="text-xs font-semibold text-[#15121F]/60">
-              Paginated ledger of all on-chain batch distributions on X Layer
+              Live ledger of all on-chain batch distributions on X Layer from database
             </p>
           </div>
         </div>
@@ -191,7 +196,7 @@ export const TransactionHistoryCard: React.FC = () => {
         )}
       </div>
 
-      {/* 2. Filter Tabs (All, Successful, Failed) */}
+      {/* 2. Filter Tabs (All, Successful, Pending, Failed) */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 bg-[#F4F6F0] p-1.5 rounded-2xl border-2 border-[#15121F]/15 font-extrabold text-xs">
           <button
@@ -225,18 +230,35 @@ export const TransactionHistoryCard: React.FC = () => {
 
           <button
             onClick={() => {
-              setFilter("failed");
+              setFilter("pending");
               setCurrentPage(1);
             }}
             className={`px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
-              filter === "failed"
-                ? "bg-red-600 text-white shadow-sm"
+              filter === "pending"
+                ? "bg-[#F6C61A] text-[#15121F] shadow-sm"
                 : "text-[#15121F]/70 hover:text-[#15121F]"
             }`}
           >
-            <AlertCircle className="w-3.5 h-3.5" />
-            <span>Failed ({failedCount})</span>
+            <Clock className="w-3.5 h-3.5" />
+            <span>Pending ({pendingCount})</span>
           </button>
+
+          {failedCount > 0 && (
+            <button
+              onClick={() => {
+                setFilter("failed");
+                setCurrentPage(1);
+              }}
+              className={`px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
+                filter === "failed"
+                  ? "bg-red-600 text-white shadow-sm"
+                  : "text-[#15121F]/70 hover:text-[#15121F]"
+              }`}
+            >
+              <AlertCircle className="w-3.5 h-3.5" />
+              <span>Failed ({failedCount})</span>
+            </button>
+          )}
         </div>
 
         {/* Filter Summary */}
@@ -260,7 +282,16 @@ export const TransactionHistoryCard: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y-2 divide-[#15121F]/10 text-xs font-medium text-[#15121F]">
-            {paginatedTransactions.length > 0 ? (
+            {isLoading ? (
+              <tr>
+                <td colSpan={7} className="py-8 text-center text-xs font-bold text-[#15121F]/60">
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-[#15121F] border-t-transparent rounded-full animate-spin" />
+                    <span>Loading transactions from Supabase...</span>
+                  </div>
+                </td>
+              </tr>
+            ) : paginatedTransactions.length > 0 ? (
               paginatedTransactions.map((tx) => (
                 <tr key={tx.id} className="hover:bg-[#F4F6F0]/70 transition-colors">
                   {/* Date & Time */}
@@ -285,15 +316,19 @@ export const TransactionHistoryCard: React.FC = () => {
 
                   {/* Tx Hash */}
                   <td className="py-3.5 px-4 border-r-2 border-[#15121F]/10 font-mono">
-                    <a
-                      href={`https://www.oklink.com/xlayer-test/tx/${tx.txHash}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-[#7C5CFA] font-extrabold hover:underline inline-flex items-center gap-1"
-                    >
-                      <span>{tx.txHash.slice(0, 8)}...{tx.txHash.slice(-6)}</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
+                    {tx.txHash ? (
+                      <a
+                        href={`https://www.oklink.com/xlayer-test/tx/${tx.txHash}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[#7C5CFA] font-extrabold hover:underline inline-flex items-center gap-1"
+                      >
+                        <span>{tx.txHash.slice(0, 8)}...{tx.txHash.slice(-6)}</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    ) : (
+                      <span className="text-[#15121F]/40 font-sans italic font-bold">Pending broadcast</span>
+                    )}
                   </td>
 
                   {/* Status Badge */}
@@ -302,6 +337,11 @@ export const TransactionHistoryCard: React.FC = () => {
                       <span className="inline-flex items-center gap-1.5 bg-[#1FAE52]/15 text-[#1FAE52] font-extrabold px-2.5 py-1 rounded-full border border-[#1FAE52]/30 text-[11px]">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>Successful</span>
+                      </span>
+                    ) : tx.status === "Pending" ? (
+                      <span className="inline-flex items-center gap-1.5 bg-[#F6C61A]/20 text-[#15121F] font-extrabold px-2.5 py-1 rounded-full border border-[#F6C61A]/40 text-[11px]">
+                        <Clock className="w-3.5 h-3.5 text-[#15121F]" />
+                        <span>Pending</span>
                       </span>
                     ) : (
                       <span
@@ -326,7 +366,7 @@ export const TransactionHistoryCard: React.FC = () => {
                       </button>
                     ) : (
                       <a
-                        href="/proof/cmp_xlayer1"
+                        href={`/proof/${tx.campaignId || "cmp_xlayer1"}`}
                         target="_blank"
                         className="px-3 py-1.5 rounded-lg bg-[#F4F6F0] hover:bg-[#15121F] text-[#15121F] hover:text-white font-extrabold text-xs border border-[#15121F]/20 cursor-pointer inline-flex items-center gap-1 transition-colors"
                       >
@@ -339,8 +379,8 @@ export const TransactionHistoryCard: React.FC = () => {
               ))
             ) : (
               <tr>
-                <td colSpan={7} className="py-8 text-center text-xs font-bold text-[#15121F]/60">
-                  No transactions match the selected filter.
+                <td colSpan={7} className="py-10 text-center text-xs font-bold text-[#15121F]/60">
+                  No transaction records found in the database.
                 </td>
               </tr>
             )}
@@ -349,47 +389,49 @@ export const TransactionHistoryCard: React.FC = () => {
       </div>
 
       {/* 4. Pagination Footer Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-        <span className="text-xs font-extrabold text-[#15121F]/70">
-          Page {currentPage} of {totalPages} ({filteredTransactions.length} Total Records)
-        </span>
+      {filteredTransactions.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+          <span className="text-xs font-extrabold text-[#15121F]/70">
+            Page {currentPage} of {totalPages} ({filteredTransactions.length} Total Records)
+          </span>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            className="px-3 py-1.5 rounded-xl bg-[#F4F6F0] hover:bg-gray-200 disabled:opacity-40 text-[#15121F] font-extrabold text-xs border-2 border-[#15121F]/20 cursor-pointer disabled:cursor-not-allowed flex items-center gap-1"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            <span>Previous</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 rounded-xl bg-[#F4F6F0] hover:bg-gray-200 disabled:opacity-40 text-[#15121F] font-extrabold text-xs border-2 border-[#15121F]/20 cursor-pointer disabled:cursor-not-allowed flex items-center gap-1"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span>Previous</span>
+            </button>
 
-          <div className="flex items-center gap-1">
-            {Array.from({ length: totalPages }).map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => setCurrentPage(idx + 1)}
-                className={`w-7 h-7 rounded-lg text-xs font-extrabold border-2 cursor-pointer transition-colors ${
-                  currentPage === idx + 1
-                    ? "bg-[#15121F] text-white border-[#15121F]"
-                    : "bg-[#F4F6F0] text-[#15121F] border-[#15121F]/20 hover:bg-gray-200"
-                }`}
-              >
-                {idx + 1}
-              </button>
-            ))}
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }).map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentPage(idx + 1)}
+                  className={`w-7 h-7 rounded-lg text-xs font-extrabold border-2 cursor-pointer transition-colors ${
+                    currentPage === idx + 1
+                      ? "bg-[#15121F] text-white border-[#15121F]"
+                      : "bg-[#F4F6F0] text-[#15121F] border-[#15121F]/20 hover:bg-gray-200"
+                  }`}
+                >
+                  {idx + 1}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 rounded-xl bg-[#F4F6F0] hover:bg-gray-200 disabled:opacity-40 text-[#15121F] font-extrabold text-xs border-2 border-[#15121F]/20 cursor-pointer disabled:cursor-not-allowed flex items-center gap-1"
+            >
+              <span>Next</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
-
-          <button
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
-            className="px-3 py-1.5 rounded-xl bg-[#F4F6F0] hover:bg-gray-200 disabled:opacity-40 text-[#15121F] font-extrabold text-xs border-2 border-[#15121F]/20 cursor-pointer disabled:cursor-not-allowed flex items-center gap-1"
-          >
-            <span>Next</span>
-            <ChevronRight className="w-4 h-4" />
-          </button>
         </div>
-      </div>
+      )}
     </div>
   );
 };

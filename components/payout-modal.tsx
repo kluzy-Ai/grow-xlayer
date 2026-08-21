@@ -5,8 +5,11 @@ import { X, CheckCircle2, ExternalLink, Wallet } from "lucide-react";
 import { useAccount } from "wagmi";
 import { SuccessShareModal } from "./success-share-modal";
 
+import { createClient } from "@/utils/supabase/client";
+
 interface CampaignItem {
   id: string;
+  slug?: string;
   name: string;
   status: string;
   amountPerWallet: number;
@@ -50,8 +53,9 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({
       : parseFloat(String(campaign.amountPerWallet)) || 0.25;
 
   const registeredCount =
-    campaign.registeredWallets ??
-    (campaign.status === "Completed" ? campaign.maxSpots : Math.min(14, campaign.maxSpots));
+    submissions.length > 0
+      ? submissions.length
+      : (campaign.registeredWallets ?? (campaign.status === "Completed" ? campaign.maxSpots : 0));
   const campaignBudget = (registeredCount * numericAmountPerWallet).toFixed(4);
   const estimatedGasFee = 0.0012;
   const totalSpend = (Number(campaignBudget) + estimatedGasFee).toFixed(4);
@@ -62,19 +66,26 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({
       return;
     }
     onExecutePayout();
+    try {
+      const supabase = createClient();
+      await supabase
+        .from("submissions")
+        .update({ status: "paid", paid_at: new Date().toISOString() })
+        .eq("campaign_id", campaign.id);
+      if (campaign.slug && campaign.slug !== campaign.id) {
+        await supabase
+          .from("submissions")
+          .update({ status: "paid", paid_at: new Date().toISOString() })
+          .eq("campaign_id", campaign.slug);
+      }
+    } catch (err) {
+      console.warn("Update submissions paid status error:", err);
+    }
     setIsSuccess(true);
     setIsShareModalOpen(true);
   };
 
-  const recipientList =
-    submissions.length > 0
-      ? submissions
-      : [
-          { id: "1", username: "@alex_web3", address: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F", status: "Registered" },
-          { id: "2", username: "@crypto_sam", address: "0x32Be343B94f860124dC4fEe278FDCBD38C102D88", status: "Registered" },
-          { id: "3", username: "@dev_elena", address: "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed", status: "Registered" },
-          { id: "4", username: "@michael_okx", address: "0xfB6916095ca1df60bb79Ce92ce3ea74c37c5d359", status: "Registered" },
-        ];
+  const recipientList = submissions;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-[#15121F]/70 backdrop-blur-md animate-in fade-in duration-200">
@@ -134,7 +145,7 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({
           <div className="w-full bg-gray-200 rounded-full h-3 border-2 border-[#15121F] overflow-hidden">
             <div
               className="bg-[#15121F] h-full rounded-full transition-all duration-500"
-              style={{ width: `${Math.min(100, (registeredCount / campaign.maxSpots) * 100)}%` }}
+              style={{ width: `${Math.min(100, (registeredCount / (campaign.maxSpots || 1)) * 100)}%` }}
             />
           </div>
         </div>
@@ -142,29 +153,35 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({
         {/* 4. Recipient List Table (Clean Address Pill, No Duplicate OKB Amount) */}
         <div className="space-y-2 pt-1">
           <div className="flex items-center justify-between text-xs font-extrabold text-[#15121F]/70 uppercase tracking-wider px-1">
-            <span>Recipient List</span>
-            <span>OKB Amount</span>
+            <span>Recipient List ({recipientList.length})</span>
+            <span>{campaign.token} Amount</span>
           </div>
 
           <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
-            {recipientList.map((rec) => (
-              <div
-                key={rec.id}
-                className="bg-[#F4F6F0] p-2 rounded-2xl border-2 border-[#15121F]/20 flex items-center justify-between gap-2 sm:gap-3 hover:border-[#15121F] transition-colors"
-              >
-                {/* Recipient Wallet Address Pill (NO duplicated OKB amount inside!) */}
-                <div className="px-3 py-1.5 rounded-full bg-white border-2 border-[#15121F] font-mono text-[11px] sm:text-xs font-bold text-[#15121F] flex items-center gap-1.5 sm:gap-2 shadow-sm shrink min-w-0 max-w-[75%] sm:max-w-none">
-                  <span className="text-[#7C5CFA] font-sans font-extrabold shrink-0">{rec.username}</span>
-                  <span className="text-[#15121F]/40 shrink-0">|</span>
-                  <span className="truncate">{`${rec.address.slice(0, 6)}...${rec.address.slice(-4)}`}</span>
-                </div>
-
-                {/* Single Clear OKB Amount on Right */}
-                <span className="font-display font-extrabold text-xs text-[#15121F] shrink-0 pr-1">
-                  {campaign.amountPerWallet.toFixed(4)} {campaign.token}
-                </span>
+            {recipientList.length === 0 ? (
+              <div className="p-6 text-center bg-[#F4F6F0] rounded-2xl border-2 border-[#15121F]/10 text-xs font-bold text-[#15121F]/60">
+                No registered wallets for this campaign yet. Share the campaign Telegram claim link to start collecting wallets!
               </div>
-            ))}
+            ) : (
+              recipientList.map((rec) => (
+                <div
+                  key={rec.id}
+                  className="bg-[#F4F6F0] p-2 rounded-2xl border-2 border-[#15121F]/20 flex items-center justify-between gap-2 sm:gap-3 hover:border-[#15121F] transition-colors"
+                >
+                  {/* Recipient Wallet Address Pill */}
+                  <div className="px-3 py-1.5 rounded-full bg-white border-2 border-[#15121F] font-mono text-[11px] sm:text-xs font-bold text-[#15121F] flex items-center gap-1.5 sm:gap-2 shadow-sm shrink min-w-0 max-w-[75%] sm:max-w-none">
+                    <span className="text-[#7C5CFA] font-sans font-extrabold shrink-0">{rec.username}</span>
+                    <span className="text-[#15121F]/40 shrink-0">|</span>
+                    <span className="truncate">{`${rec.address.slice(0, 6)}...${rec.address.slice(-4)}`}</span>
+                  </div>
+
+                  {/* Single Clear Token Amount on Right */}
+                  <span className="font-display font-extrabold text-xs text-[#15121F] shrink-0 pr-1">
+                    {numericAmountPerWallet.toFixed(4)} {campaign.token}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
@@ -194,14 +211,18 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({
         <div className="pt-1 sm:pt-2">
           <button
             onClick={handleSignTransaction}
-            disabled={isDistributing}
+            disabled={isDistributing || recipientList.length === 0}
             className={`w-full py-3.5 sm:py-4 px-4 rounded-full font-extrabold text-xs sm:text-sm border-3 sm:border-4 shadow-lg transition-transform hover:scale-[1.01] active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2 ${
-              !isConnected
+              recipientList.length === 0
+                ? "bg-gray-300 text-gray-600 border-gray-400 cursor-not-allowed"
+                : !isConnected
                 ? "bg-[#7C5CFA] hover:bg-[#6848E4] text-white border-[#15121F]"
                 : "bg-[#15121F] hover:bg-[#2A2438] text-white border-[#B4E23F]"
             }`}
           >
-            {!isConnected ? (
+            {recipientList.length === 0 ? (
+              <span>No Wallets to Distribute (0 {campaign.token})</span>
+            ) : !isConnected ? (
               <>
                 <Wallet className="w-4 h-4" />
                 <span>Connect Wallet to Pay Out ({totalSpend} {campaign.token})</span>
@@ -230,6 +251,8 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({
         tokenSymbol={campaign.token}
         txHash={txHash}
         recipientCount={recipientList.length}
+        campaignId={campaign.id}
+        campaignSlug={campaign.slug}
       />
     </div>
   );

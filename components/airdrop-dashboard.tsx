@@ -30,7 +30,6 @@ import { signOutCreator } from "@/app/actions/auth";
 import { createClient } from "@/utils/supabase/client";
 import { AiCampaignModal } from "@/components/ai-campaign-modal";
 import { CampaignCreatorModal } from "./campaign-creator-modal";
-import { TelegramSimulatorModal } from "./telegram-simulator-modal";
 import { WalletModal } from "./wallet-modal";
 import { PayoutModal } from "./payout-modal";
 import { TransactionHistoryCard } from "./transaction-history-card";
@@ -73,7 +72,6 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
 
   const [isCreatorModalOpen, setIsCreatorModalOpen] = useState(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
-  const [isTelegramSimulatorOpen, setIsTelegramSimulatorOpen] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [isCampaignsModalOpen, setIsCampaignsModalOpen] = useState(false);
   const [selectedPayoutCampaign, setSelectedPayoutCampaign] = useState<any | null>(null);
@@ -90,36 +88,53 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
   >("liquidity");
 
   const [dbSubmissions, setDbSubmissions] = useState<any[]>([]);
+  const [dbCampaigns, setDbCampaigns] = useState<any[]>([]);
 
-  // 1. Fetch live submissions & subscribe to Realtime updates from Supabase
+  // 1. Fetch live submissions & campaigns & subscribe to Realtime updates from Supabase
   useEffect(() => {
     const supabase = createClient();
 
-    const fetchSubmissions = async () => {
+    const fetchInitialData = async () => {
       try {
-        const { data, error } = await supabase
+        // Fetch Submissions
+        const { data: subData } = await supabase
           .from("submissions")
           .select("*")
           .order("created_at", { ascending: false });
 
-        if (data && data.length > 0) {
-          setDbSubmissions(data);
+        if (subData && subData.length > 0) {
+          setDbSubmissions(subData);
+        }
+
+        // Fetch Campaigns
+        const { data: campData } = await supabase
+          .from("campaigns")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (campData && campData.length > 0) {
+          setDbCampaigns(campData);
         }
       } catch (err) {
         console.warn("Supabase fetch error:", err);
       }
     };
 
-    fetchSubmissions();
+    fetchInitialData();
 
-    const channel = supabase
-      .channel("submissions_realtime")
+    // Subscribe to Submissions realtime changes
+    const subChannel = supabase
+      .channel("submissions_realtime_sync")
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "submissions" },
+        { event: "*", schema: "public", table: "submissions" },
         (payload) => {
-          if (payload.new) {
-            setDbSubmissions((prev) => [payload.new, ...prev]);
+          if (payload.eventType === "INSERT" && payload.new) {
+            setDbSubmissions((prev) => {
+              const exists = prev.some((s) => s.id === payload.new.id);
+              if (exists) return prev;
+              return [payload.new, ...prev];
+            });
             addSubmission({
               id: payload.new.id || `sub_${Date.now()}`,
               address: payload.new.wallet_address,
@@ -127,15 +142,93 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
               timestamp: "Just now",
               status: payload.new.status === "paid" ? "Paid" : "Submitted",
             });
+          } else if (payload.eventType === "UPDATE" && payload.new) {
+            setDbSubmissions((prev) =>
+              prev.map((s) => (s.id === payload.new.id ? payload.new : s))
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    // Subscribe to Campaigns realtime changes
+    const campChannel = supabase
+      .channel("campaigns_realtime_sync")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "campaigns" },
+        (payload) => {
+          if (payload.eventType === "INSERT" && payload.new) {
+            setDbCampaigns((prev) => {
+              const exists = prev.some((c) => c.id === payload.new.id || (c.slug && c.slug === payload.new.slug));
+              if (exists) return prev;
+              return [payload.new, ...prev];
+            });
+          } else if (payload.eventType === "UPDATE" && payload.new) {
+            setDbCampaigns((prev) =>
+              prev.map((c) => (c.id === payload.new.id ? payload.new : c))
+            );
           }
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(subChannel);
+      supabase.removeChannel(campChannel);
     };
   }, []);
+
+  const userEmail = user?.email || "";
+  const communityName =
+    user?.user_metadata?.community_name ||
+    user?.user_metadata?.name ||
+    (userEmail ? userEmail.split("@")[0] : "Web3 Creator");
+
+  // Map fetched database campaigns into dashboard format
+  const mappedDbCampaigns = dbCampaigns.map((c) => ({
+    id: c.id,
+    slug: c.slug || c.id,
+    name: c.title || "Grow Campaign",
+    status: c.status === "active" ? "Active" : "Completed",
+    amountPerWallet: Number(c.amount_per_claim) || 0.25,
+    maxSpots: Number(c.max_spots) || 20,
+    token: c.token_symbol || "OKB",
+    telegramLink: `https://t.me/GrowXlayerbot?start=${c.slug || c.id}`,
+    createdAt: new Date(c.created_at || Date.now()).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }),
+  }));
+
+  // Combine newly created local state campaign if not yet in database
+  const combinedCampaigns: any[] = [...mappedDbCampaigns];
+  if (
+    campaign &&
+    !combinedCampaigns.some(
+      (c) => c.id === campaign.id || (c.slug && c.slug === campaign.slug)
+    )
+  ) {
+    combinedCampaigns.unshift({
+      ...campaign,
+      slug: campaign.slug || campaign.id,
+      name: campaign.name || campaign.title || "Grow Campaign",
+    });
+  }
+
+  // Calculate live registered wallets per campaign from dbSubmissions
+  const allCampaigns = combinedCampaigns.map((camp) => {
+    const matchingSubs = dbSubmissions.filter(
+      (s) => s.campaign_id === camp.id || (camp.slug && s.campaign_id === camp.slug)
+    );
+    const registeredCount = matchingSubs.length;
+
+    return {
+      ...camp,
+      registeredWallets: registeredCount,
+    };
+  });
 
   // Synchronize URL search parameters with dashboard popup modals
   useEffect(() => {
@@ -145,20 +238,15 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
       setIsCampaignsModalOpen(true);
     } else if (modalParam === "connect-wallet") {
       setIsWalletModalOpen(true);
-    } else if (modalParam === "test-bot") {
-      setIsTelegramSimulatorOpen(true);
     } else if (modalParam === "payout") {
-      setSelectedPayoutCampaign({
-        id: campaign?.id || "cmp_xlayer1",
-        name: campaign?.name || "BuildX OKB Community Giveaway",
-        status: campaign?.status || "Active",
-        amountPerWallet: campaign?.amountPerWallet || 0.25,
-        maxSpots: campaign?.maxSpots || 20,
-        token: campaign?.token || "OKB",
-      });
-      setIsPayoutModalOpen(true);
+      const activeCamp =
+        campaign || (allCampaigns.length > 0 ? allCampaigns[0] : null);
+      if (activeCamp) {
+        setSelectedPayoutCampaign(activeCamp);
+        setIsPayoutModalOpen(true);
+      }
     }
-  }, [modalParam, campaign]);
+  }, [modalParam, campaign, dbCampaigns]);
 
   const handleCopyAddress = (addr: string) => {
     if (typeof window !== "undefined" && navigator.clipboard) {
@@ -171,56 +259,6 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
   const treasuryBalance = isWalletConnected && balanceData
     ? Number(formatEther(balanceData.value)).toFixed(2)
     : "0.00";
-
-  const userEmail = user?.email || "creator@buildx.xyz";
-  const communityName = user?.user_metadata?.community_name || "BuildX Guild";
-
-  // List of creator campaigns (Active & Completed) with unique Telegram links
-  const allCampaigns: Array<{
-    id: string;
-    name: string;
-    status: string;
-    amountPerWallet: number;
-    maxSpots: number;
-    registeredWallets?: number;
-    token: string;
-    telegramLink: string;
-    createdAt: string;
-  }> = [
-    {
-      id: campaign?.id || "cmp_xlayer1",
-      name: campaign?.name || "BuildX OKB Community Giveaway",
-      status: campaign?.status || "Active",
-      amountPerWallet: campaign?.amountPerWallet || 0.25,
-      maxSpots: campaign?.maxSpots || 20,
-      registeredWallets: 14,
-      token: campaign?.token || "OKB",
-      telegramLink: campaign?.telegramLink || "https://t.me/GrowXlayerbot?start=cmp_xlayer1",
-      createdAt: campaign?.createdAt || "Aug 13, 2026",
-    },
-    {
-      id: "cmp_xlayer_phase1",
-      name: "X Layer Guild Airdrop Phase 1",
-      status: "Completed",
-      amountPerWallet: 0.5,
-      maxSpots: 50,
-      registeredWallets: 50,
-      token: "OKB",
-      telegramLink: "https://t.me/GrowXlayerbot?start=cmp_xlayer_phase1",
-      createdAt: "Aug 10, 2026",
-    },
-    {
-      id: "cmp_xlayer_fund",
-      name: "OKB Community Growth Fund",
-      status: "Active",
-      amountPerWallet: 0.1,
-      maxSpots: 100,
-      registeredWallets: 68,
-      token: "OKB",
-      telegramLink: "https://t.me/GrowXlayerbot?start=cmp_xlayer_fund",
-      createdAt: "Aug 05, 2026",
-    },
-  ];
 
   const handleCopyText = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -249,24 +287,34 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
 
     try {
       if (user?.id) {
-        await supabase.from("campaigns").insert([
+        const { data: insertedData } = await supabase.from("campaigns").insert([
           {
             creator_id: user.id,
+            slug: newCamp.id || newCamp.slug,
             title: newCamp.title || newCamp.name,
             token_symbol: newCamp.token,
             amount_per_claim: Number(newCamp.amountPerWallet) || 0.25,
             total_budget: Number(newCamp.totalPool) || 0,
+            max_spots: Number(newCamp.maxSpots) || 20,
             status: "active",
             network_chain_id: 1952,
           },
-        ]);
+        ]).select().maybeSingle();
+
+        if (insertedData) {
+          setDbCampaigns((prev) => [insertedData, ...prev]);
+        }
       }
     } catch (err) {
       console.warn("Supabase campaign insert error:", err);
     }
   };
 
-  const handleTelegramSubmit = (telegramHandle: string, walletAddress: string) => {
+  const handleTelegramSubmit = (
+    telegramHandle: string,
+    walletAddress: string,
+    campaignId: string
+  ) => {
     addSubmission({
       id: `sub_${Date.now()}`,
       address: walletAddress,
@@ -455,94 +503,44 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
           </h3>
           <button
             onClick={() => setIsCampaignsModalOpen(true)}
-            className="text-xs font-extrabold text-[#7C5CFA] hover:underline"
+            className="text-xs font-extrabold text-[#7C5CFA] hover:underline cursor-pointer"
           >
             View All Campaigns ({allCampaigns.length}) →
           </button>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Green Campaign Pill */}
-          <button
-            onClick={() => setActiveCampaignFilter("liquidity")}
-            className={`px-5 py-3 rounded-full border-2 border-[#15121F] font-extrabold text-xs sm:text-sm flex items-center gap-2.5 transition-transform hover:scale-105 cursor-pointer ${
-              activeCampaignFilter === "liquidity"
-                ? "bg-[#1FAE52] text-[#15121F] shadow-md"
-                : "bg-[#1FAE52]/20 text-[#15121F]"
-            }`}
-          >
-            <div className="w-6 h-6 rounded-full bg-[#15121F] text-white flex items-center justify-center">
-              <TrendingUp className="w-3.5 h-3.5 text-[#1FAE52]" />
-            </div>
-            <span>Campaign: Liquidity Boost</span>
-          </button>
-
-          {/* Yellow Campaign Pill */}
-          <button
-            onClick={() => setActiveCampaignFilter("ai")}
-            className={`px-5 py-3 rounded-full border-2 border-[#15121F] font-extrabold text-xs sm:text-sm flex items-center gap-2.5 transition-transform hover:scale-105 cursor-pointer ${
-              activeCampaignFilter === "ai"
-                ? "bg-[#F6C61A] text-[#15121F] shadow-md"
-                : "bg-[#F6C61A]/20 text-[#15121F]"
-            }`}
-          >
-            <div className="w-6 h-6 rounded-full bg-[#15121F] text-white flex items-center justify-center">
-              <Lightbulb className="w-3.5 h-3.5 text-[#F6C61A]" />
-            </div>
-            <span>Campaign: AI Growth Fund</span>
-          </button>
-
-          {/* Purple Campaign Pill */}
-          <button
-            onClick={() => setActiveCampaignFilter("batch")}
-            className={`px-5 py-3 rounded-full border-2 border-[#15121F] font-extrabold text-xs sm:text-sm flex items-center gap-2.5 transition-transform hover:scale-105 cursor-pointer ${
-              activeCampaignFilter === "batch"
-                ? "bg-[#7C5CFA] text-white shadow-md"
-                : "bg-[#7C5CFA]/20 text-[#15121F]"
-            }`}
-          >
-            <div className="w-6 h-6 rounded-full bg-[#15121F] text-white flex items-center justify-center">
-              <Zap className="w-3.5 h-3.5 text-[#7C5CFA]" />
-            </div>
-            <span>Campaign: Batch Drop Protocol</span>
-          </button>
-        </div>
-
-        {/* Campaign Action & AI Prompt Quick Launcher */}
-        <div className="bg-[#F4F6F0] p-4 rounded-2xl border-2 border-[#15121F]/10 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
-          <div className="space-y-1">
-            <div className="font-extrabold text-sm text-[#15121F]">
-              {activeCampaignFilter === "liquidity"
-                ? "BuildX OKB Community Giveaway (Liquidity Boost)"
-                : activeCampaignFilter === "ai"
-                ? "AI Growth Fund Allocation"
-                : "Batch Drop Distribution Engine"}
-            </div>
-            <p className="text-xs font-medium text-[#15121F]/60">
-              Community Telegram Claim Link: {campaign?.telegramLink || "https://t.me/GrowXlayerbot?start=cmp_xlayer1"}
-            </p>
+        {allCampaigns.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-3">
+            {allCampaigns.map((camp, idx) => {
+              const colors = [
+                { bg: "bg-[#1FAE52]", text: "text-[#15121F]", icon: TrendingUp },
+                { bg: "bg-[#F6C61A]", text: "text-[#15121F]", icon: Lightbulb },
+                { bg: "bg-[#7C5CFA]", text: "text-white", icon: Zap },
+              ];
+              const color = colors[idx % colors.length];
+              const IconComp = color.icon;
+              return (
+                <button
+                  key={camp.id}
+                  onClick={() => {
+                    setSelectedPayoutCampaign(camp);
+                    setIsPayoutModalOpen(true);
+                  }}
+                  className={`px-5 py-3 rounded-full border-2 border-[#15121F] font-extrabold text-xs sm:text-sm flex items-center gap-2.5 transition-transform hover:scale-105 cursor-pointer ${color.bg} ${color.text} shadow-md`}
+                >
+                  <div className="w-6 h-6 rounded-full bg-[#15121F] text-white flex items-center justify-center">
+                    <IconComp className="w-3.5 h-3.5" />
+                  </div>
+                  <span>Campaign: {camp.name} ({camp.registeredWallets}/{camp.maxSpots})</span>
+                </button>
+              );
+            })}
           </div>
-
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <button
-              onClick={() =>
-                handleCopyText(
-                  campaign?.telegramLink || "https://t.me/GrowXlayerbot?start=cmp_xlayer1",
-                  "main_link"
-                )
-              }
-              className="px-4 py-2 rounded-xl bg-[#15121F] text-white text-xs font-bold hover:bg-[#2A2438] shrink-0"
-            >
-              {copiedLink === "main_link" ? "Copied Link!" : "Copy Link"}
-            </button>
-            <button
-              onClick={() => setIsTelegramSimulatorOpen(true)}
-              className="px-4 py-2 rounded-xl bg-[#7C5CFA] text-white text-xs font-bold hover:bg-[#6848E4] shrink-0"
-            >
-              Test Bot
-            </button>
+        ) : (
+          <div className="p-6 text-center bg-[#F4F6F0] rounded-2xl border-2 border-[#15121F]/10 text-xs font-bold text-[#15121F]/60">
+            No campaigns created yet in the database. Click <button onClick={() => setIsCreatorModalOpen(true)} className="text-[#15121F] font-extrabold underline cursor-pointer">Create Campaign</button> or <button onClick={() => setIsAiModalOpen(true)} className="text-[#7C5CFA] font-extrabold underline cursor-pointer">Create with AI</button> to launch your first token giveaway on X Layer!
           </div>
-        </div>
+        )}
       </div>
 
       {/* 4. CAMPAIGN FEED */}
@@ -568,55 +566,59 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
               </tr>
             </thead>
             <tbody className="divide-y-2 divide-[#15121F]/10 font-medium text-xs sm:text-sm text-[#15121F]">
-              {allCampaigns.map((camp) => {
-                const regCount =
-                  camp.registeredWallets ??
-                  (camp.status === "Completed"
-                    ? camp.maxSpots
-                    : Math.min(14, camp.maxSpots));
-                const isEnded = camp.status === "Completed" || camp.status === "Ended";
+              {allCampaigns.length > 0 ? (
+                allCampaigns.map((camp) => {
+                  const regCount = camp.registeredWallets ?? 0;
+                  const isEnded = camp.status === "Completed" || camp.status === "Ended";
 
-                return (
-                  <tr key={camp.id} className="hover:bg-[#F4F6F0]/60 transition-colors">
-                    <td className="py-3.5 px-4 font-bold border-r-2 border-[#15121F]/10 flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-xl bg-[#7C5CFA]/10 text-[#7C5CFA] flex items-center justify-center font-bold text-xs shrink-0">
-                        <Zap className="w-4 h-4" />
-                      </div>
-                      <span className="font-extrabold text-[#15121F]">{camp.name}</span>
-                    </td>
+                  return (
+                    <tr key={camp.id} className="hover:bg-[#F4F6F0]/60 transition-colors">
+                      <td className="py-3.5 px-4 font-bold border-r-2 border-[#15121F]/10 flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-xl bg-[#7C5CFA]/10 text-[#7C5CFA] flex items-center justify-center font-bold text-xs shrink-0">
+                          <Zap className="w-4 h-4" />
+                        </div>
+                        <span className="font-extrabold text-[#15121F]">{camp.name}</span>
+                      </td>
 
-                    <td className="py-3.5 px-4 border-r-2 border-[#15121F]/10 font-bold">
-                      <span className="text-[#15121F]">
-                        {regCount} / {camp.maxSpots} Wallets
-                      </span>
-                    </td>
+                      <td className="py-3.5 px-4 border-r-2 border-[#15121F]/10 font-bold">
+                        <span className="text-[#15121F]">
+                          {regCount} / {camp.maxSpots} Wallets
+                        </span>
+                      </td>
 
-                    <td className="py-3.5 px-4 border-r-2 border-[#15121F]/10">
-                      <span
-                        className={`px-3 py-1 rounded-full text-[11px] font-extrabold ${
-                          !isEnded
-                            ? "bg-[#1FAE52] text-white"
-                            : "bg-[#15121F]/10 text-[#15121F]"
-                        }`}
-                      >
-                        {!isEnded ? "Active" : "Ended"}
-                      </span>
-                    </td>
+                      <td className="py-3.5 px-4 border-r-2 border-[#15121F]/10">
+                        <span
+                          className={`px-3 py-1 rounded-full text-[11px] font-extrabold ${
+                            !isEnded
+                              ? "bg-[#1FAE52] text-white"
+                              : "bg-[#15121F]/10 text-[#15121F]"
+                          }`}
+                        >
+                          {!isEnded ? "Active" : "Ended"}
+                        </span>
+                      </td>
 
-                    <td className="py-3.5 px-4">
-                      <button
-                        onClick={() => {
-                          setSelectedPayoutCampaign(camp);
-                          setIsPayoutModalOpen(true);
-                        }}
-                        className="px-4 py-2 rounded-xl bg-[#15121F] hover:bg-[#7C5CFA] text-white text-xs font-extrabold transition-colors cursor-pointer shadow-sm"
-                      >
-                        Pay Out
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
+                      <td className="py-3.5 px-4">
+                        <button
+                          onClick={() => {
+                            setSelectedPayoutCampaign(camp);
+                            setIsPayoutModalOpen(true);
+                          }}
+                          className="px-4 py-2 rounded-xl bg-[#15121F] hover:bg-[#7C5CFA] text-white text-xs font-extrabold transition-colors cursor-pointer shadow-sm"
+                        >
+                          Pay Out
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={4} className="py-10 text-center text-xs font-bold text-[#15121F]/60">
+                    No campaigns created yet in the database.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -640,67 +642,73 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
               </div>
               <button
                 onClick={() => setIsCampaignsModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-[#F4F6F0] text-[#15121F] font-bold border border-[#15121F]/20 hover:bg-[#15121F] hover:text-white transition-colors flex items-center justify-center"
+                className="w-8 h-8 rounded-full bg-[#F4F6F0] text-[#15121F] font-bold border border-[#15121F]/20 hover:bg-[#15121F] hover:text-white transition-colors flex items-center justify-center cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="space-y-4">
-              {allCampaigns.map((camp) => (
-                <div
-                  key={camp.id}
-                  className="bg-[#F4F6F0] rounded-2xl p-4 border-2 border-[#15121F]/10 space-y-3"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-display font-extrabold text-base text-[#15121F]">
-                          {camp.name}
-                        </span>
-                        <span
-                          className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${
-                            camp.status === "Active"
-                              ? "bg-[#1FAE52] text-white"
-                              : "bg-[#7C5CFA] text-white"
-                          }`}
-                        >
-                          {camp.status}
+              {allCampaigns.length > 0 ? (
+                allCampaigns.map((camp) => (
+                  <div
+                    key={camp.id}
+                    className="bg-[#F4F6F0] rounded-2xl p-4 border-2 border-[#15121F]/10 space-y-3"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-display font-extrabold text-base text-[#15121F]">
+                            {camp.name}
+                          </span>
+                          <span
+                            className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${
+                              camp.status === "Active"
+                                ? "bg-[#1FAE52] text-white"
+                                : "bg-[#7C5CFA] text-white"
+                            }`}
+                          >
+                            {camp.status}
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#15121F]/60 font-medium mt-0.5">
+                          Created {camp.createdAt} • Target: {camp.maxSpots} Wallets • Payout: {camp.amountPerWallet} {camp.token}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Telegram Deep Link Box */}
+                    <div className="bg-white p-2.5 rounded-xl border border-[#15121F]/20 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <Send className="w-4 h-4 text-[#7C5CFA] shrink-0" />
+                        <span className="font-mono text-xs text-[#15121F] truncate">
+                          {camp.telegramLink}
                         </span>
                       </div>
-                      <p className="text-xs text-[#15121F]/60 font-medium mt-0.5">
-                        Created {camp.createdAt} • Target: {camp.maxSpots} Wallets • Payout: {camp.amountPerWallet} {camp.token}
-                      </p>
+                      <button
+                        onClick={() => handleCopyText(camp.telegramLink, camp.id)}
+                        className="px-3 py-1.5 rounded-lg bg-[#15121F] text-white hover:bg-[#2A2438] text-xs font-bold shrink-0 flex items-center gap-1 cursor-pointer"
+                      >
+                        {copiedLink === camp.id ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-[#1FAE52]" />
+                            <span>Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5" />
+                            <span>Copy Link</span>
+                          </>
+                        )}
+                      </button>
                     </div>
                   </div>
-
-                  {/* Telegram Deep Link Box */}
-                  <div className="bg-white p-2.5 rounded-xl border border-[#15121F]/20 flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 overflow-hidden">
-                      <Send className="w-4 h-4 text-[#7C5CFA] shrink-0" />
-                      <span className="font-mono text-xs text-[#15121F] truncate">
-                        {camp.telegramLink}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => handleCopyText(camp.telegramLink, camp.id)}
-                      className="px-3 py-1.5 rounded-lg bg-[#15121F] text-white hover:bg-[#2A2438] text-xs font-bold shrink-0 flex items-center gap-1"
-                    >
-                      {copiedLink === camp.id ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 text-[#1FAE52]" />
-                          <span>Copied!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3.5 h-3.5" />
-                          <span>Copy Link</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
+                ))
+              ) : (
+                <div className="p-6 text-center text-xs font-bold text-[#15121F]/60">
+                  No campaigns created yet.
                 </div>
-              ))}
+              )}
             </div>
 
             <div className="pt-2 flex justify-end">
@@ -709,7 +717,7 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
                   setIsCampaignsModalOpen(false);
                   setIsCreatorModalOpen(true);
                 }}
-                className="btn-pill btn-grow-primary px-6 py-3 text-xs font-extrabold text-white flex items-center gap-2 shadow-lg"
+                className="btn-pill btn-grow-primary px-6 py-3 text-xs font-extrabold text-white flex items-center gap-2 shadow-lg cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 <span>Create New Campaign</span>
@@ -729,7 +737,7 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
               </h3>
               <button
                 onClick={() => setIsWalletModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-[#F4F6F0] text-[#15121F] font-bold border border-[#15121F]/20 hover:bg-[#15121F] hover:text-white transition-colors flex items-center justify-center"
+                className="w-8 h-8 rounded-full bg-[#F4F6F0] text-[#15121F] font-bold border border-[#15121F]/20 hover:bg-[#15121F] hover:text-white transition-colors flex items-center justify-center cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -740,7 +748,7 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
                 <button
                   key={c.id}
                   onClick={() => handleConnectConnector(c)}
-                  className="w-full p-3.5 bg-[#F4F6F0] hover:bg-[#15121F] hover:text-white rounded-2xl border-2 border-[#15121F]/10 flex items-center justify-between font-bold text-sm text-[#15121F] transition-all group"
+                  className="w-full p-3.5 bg-[#F4F6F0] hover:bg-[#15121F] hover:text-white rounded-2xl border-2 border-[#15121F]/10 flex items-center justify-between font-bold text-sm text-[#15121F] transition-all group cursor-pointer"
                 >
                   <div className="flex items-center gap-2.5">
                     <Wallet className="w-4 h-4 text-[#7C5CFA] group-hover:text-[#F6C61A]" />
@@ -753,19 +761,6 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
           </div>
         </div>
       )}
-
-      {/* Modals */}
-      <CampaignCreatorModal
-        isOpen={isCreatorModalOpen}
-        onClose={() => setIsCreatorModalOpen(false)}
-        onCreate={handleCreateCampaign}
-      />
-
-      <TelegramSimulatorModal
-        isOpen={isTelegramSimulatorOpen}
-        onClose={() => setIsTelegramSimulatorOpen(false)}
-        onSubmitWallet={handleTelegramSubmit}
-      />
 
       {/* DANGER SIGN OUT CONFIRMATION MODAL */}
       {isSignOutModalOpen && (
@@ -788,15 +783,15 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
               </div>
               <button
                 onClick={() => setIsSignOutModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-[#F4F6F0] text-[#15121F] font-bold border border-[#15121F]/20 hover:bg-[#15121F] hover:text-white transition-colors flex items-center justify-center"
+                className="w-8 h-8 rounded-full bg-[#F4F6F0] hover:bg-gray-200 text-[#15121F] flex items-center justify-center font-extrabold border border-[#15121F]/20 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Warning Message Box */}
-            <div className="p-4 bg-red-50 rounded-2xl border-2 border-red-200 space-y-2 text-xs text-red-900 font-medium">
-              <p>
+            {/* Warning Body Copy */}
+            <div className="bg-red-50 p-4 rounded-2xl border-2 border-red-200 space-y-1.5">
+              <p className="text-xs font-bold text-red-900 leading-relaxed">
                 You are about to sign out of your protected treasury session. Any unexecuted AI distribution plans or active claim sessions will require re-authentication.
               </p>
             </div>
@@ -806,7 +801,7 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
               <button
                 onClick={() => setIsSignOutModalOpen(false)}
                 disabled={isSigningOut}
-                className="w-full sm:w-1/2 btn-pill bg-[#F4F6F0] text-[#15121F] hover:bg-[#15121F]/10 py-3.5 text-sm font-bold border-2 border-[#15121F]/20"
+                className="w-full sm:w-1/2 btn-pill bg-[#F4F6F0] text-[#15121F] hover:bg-[#15121F]/10 py-3.5 text-sm font-bold border-2 border-[#15121F]/20 cursor-pointer"
               >
                 Cancel
               </button>
@@ -814,7 +809,7 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
               <button
                 onClick={handleConfirmSignOut}
                 disabled={isSigningOut}
-                className="w-full sm:w-1/2 btn-pill bg-red-600 hover:bg-red-700 text-white py-3.5 text-sm font-extrabold shadow-lg border-2 border-red-800 flex items-center justify-center"
+                className="w-full sm:w-1/2 btn-pill bg-red-600 hover:bg-red-700 text-white py-3.5 text-sm font-extrabold shadow-lg border-2 border-red-800 flex items-center justify-center cursor-pointer"
               >
                 {isSigningOut ? "Signing Out..." : "Sign Out"}
               </button>
@@ -822,17 +817,42 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
           </div>
         </div>
       )}
-      {/* Campaign Payout Details & Signing Modal */}
-      <PayoutModal
-        isOpen={isPayoutModalOpen}
-        onClose={() => setIsPayoutModalOpen(false)}
-        campaign={selectedPayoutCampaign}
-        submissions={submissions}
-        onExecutePayout={executeDistribution}
-        isDistributing={isDistributing}
-        txHash={txHash}
-        onConnectWallet={() => setIsWalletModalOpen(true)}
+
+      {/* Modals */}
+      <CampaignCreatorModal
+        isOpen={isCreatorModalOpen}
+        onClose={() => setIsCreatorModalOpen(false)}
+        onCreate={handleCreateCampaign}
       />
+
+      {/* Campaign Payout Details & Signing Modal */}
+      {selectedPayoutCampaign && (
+        <PayoutModal
+          isOpen={isPayoutModalOpen}
+          onClose={() => {
+            setIsPayoutModalOpen(false);
+            setSelectedPayoutCampaign(null);
+          }}
+          campaign={selectedPayoutCampaign}
+          submissions={dbSubmissions
+            .filter(
+              (s) =>
+                s.campaign_id === selectedPayoutCampaign.id ||
+                (selectedPayoutCampaign.slug &&
+                  s.campaign_id === selectedPayoutCampaign.slug)
+            )
+            .map((s) => ({
+              id: s.id,
+              address: s.wallet_address,
+              username: s.telegram_handle,
+              status: s.status === "paid" ? "Paid" : "Registered",
+            }))}
+          onExecutePayout={executeDistribution}
+          isDistributing={isDistributing}
+          txHash={txHash}
+          onConnectWallet={() => setIsWalletModalOpen(true)}
+        />
+      )}
 
       {/* AI Campaign Copilot Modal */}
       <AiCampaignModal

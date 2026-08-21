@@ -22,7 +22,7 @@ export default function DownloadPage() {
           </h1>
 
           <p className="text-lg text-[#15121F]/70 font-medium max-w-lg mx-auto">
-            No app store download required! Access the full Grow Web3 Creator Dashboard & Telegram Bot simulator directly on desktop or mobile.
+            No app store download required! Access the full Grow Web3 Creator Dashboard & Telegram Bot integration directly on desktop or mobile.
           </p>
 
           <div className="flex justify-center">

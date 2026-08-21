@@ -5,66 +5,31 @@ import { Campaign, WalletSubmission, AIDistributionPlan } from "@/types";
 import { generateDistributionPlan } from "@/services/ai-agent";
 
 export function useAirdrop() {
-  const [campaign, setCampaign] = useState<Campaign>({
-    id: "cmp_xlayer1",
-    name: "BuildX OKB Community Giveaway",
-    token: "OKB",
-    amountPerWallet: 0.25,
-    maxSpots: 20,
-    telegramLink: "https://t.me/GrowXlayerbot?start=cmp_xlayer1",
-    createdAt: "Aug 13, 2026",
-    status: "Active",
-  });
-
-  const [submissions, setSubmissions] = useState<WalletSubmission[]>([
-    {
-      id: "sub_1",
-      address: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
-      username: "@alex_web3",
-      timestamp: "10 mins ago",
-      status: "Submitted",
-    },
-    {
-      id: "sub_2",
-      address: "0x32Be343B94f860124dC4fEe278FDCBD38C102D88",
-      username: "@crypto_sam",
-      timestamp: "8 mins ago",
-      status: "Submitted",
-    },
-    {
-      id: "sub_3",
-      address: "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed",
-      username: "@dev_elena",
-      timestamp: "5 mins ago",
-      status: "Submitted",
-    },
-    {
-      id: "sub_4",
-      address: "0xfB6916095ca1df60bB79Ce92ce3ea74c37c5d359",
-      username: "@michael_okx",
-      timestamp: "2 mins ago",
-      status: "Submitted",
-    },
-  ]);
-
+  const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [submissions, setSubmissions] = useState<WalletSubmission[]>([]);
   const [aiPlan, setAiPlan] = useState<AIDistributionPlan | null>(null);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [isDistributing, setIsDistributing] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
 
   const addSubmission = (newSub: WalletSubmission) => {
-    setSubmissions((prev) => [newSub, ...prev]);
+    setSubmissions((prev) => {
+      const exists = prev.some((s) => s.id === newSub.id || s.address === newSub.address);
+      if (exists) return prev;
+      return [newSub, ...prev];
+    });
   };
 
   const createPlan = async (prompt: string) => {
+    if (!campaign) return;
     setIsAiGenerating(true);
     setTxHash(null);
     try {
       const plan = await generateDistributionPlan(
         prompt,
         submissions,
-        campaign.amountPerWallet,
-        campaign.token
+        campaign.amountPerWallet || 0.25,
+        campaign.token || "OKB"
       );
       setAiPlan(plan);
     } finally {
@@ -92,7 +57,9 @@ export function useAirdrop() {
         })
       );
 
-      setCampaign((prev) => ({ ...prev, status: "Completed" }));
+      if (campaign) {
+        setCampaign((prev) => (prev ? { ...prev, status: "Completed" } : null));
+      }
     }, 1800);
   };
 
@@ -100,6 +67,7 @@ export function useAirdrop() {
     campaign,
     setCampaign,
     submissions,
+    setSubmissions,
     addSubmission,
     aiPlan,
     isAiGenerating,
