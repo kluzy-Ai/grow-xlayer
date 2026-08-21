@@ -26,7 +26,7 @@ export const SuccessShareModal: React.FC<SuccessShareModalProps> = ({
   const [isCopied, setIsCopied] = useState(false);
 
   const promoImageUrl = "https://grow-xlayer.vercel.app/grow-promo-share.png";
-  const campaignUrl = "https://t.me/GrowBot?start=cmp_xlayer1";
+  const campaignUrl = "https://t.me/GrowXlayerbot?start=cmp_xlayer1";
   const proofUrl = "https://grow-xlayer.vercel.app/proof/cmp_xlayer1";
 
   // Crafted professional copywriter intent message featuring public proof link & anonymous crypto privacy guarantee

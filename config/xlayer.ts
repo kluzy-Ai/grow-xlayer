@@ -17,5 +17,5 @@ export const XLAYER_MAINNET_CONFIG = {
 export const SITE_CONFIG = {
   name: "Grow",
   description: "AI-Powered Token Giveaways Deployed on X Layer",
-  telegramBotUsername: "GrowBot",
+  telegramBotUsername: "GrowXlayerbot",
 };

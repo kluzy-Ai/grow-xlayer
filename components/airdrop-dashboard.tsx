@@ -195,7 +195,7 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
       maxSpots: campaign?.maxSpots || 20,
       registeredWallets: 14,
       token: campaign?.token || "OKB",
-      telegramLink: campaign?.telegramLink || "https://t.me/GrowBot?start=cmp_xlayer1",
+      telegramLink: campaign?.telegramLink || "https://t.me/GrowXlayerbot?start=cmp_xlayer1",
       createdAt: campaign?.createdAt || "Aug 13, 2026",
     },
     {
@@ -206,7 +206,7 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
       maxSpots: 50,
       registeredWallets: 50,
       token: "OKB",
-      telegramLink: "https://t.me/GrowBot?start=cmp_xlayer_phase1",
+      telegramLink: "https://t.me/GrowXlayerbot?start=cmp_xlayer_phase1",
       createdAt: "Aug 10, 2026",
     },
     {
@@ -217,7 +217,7 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
       maxSpots: 100,
       registeredWallets: 68,
       token: "OKB",
-      telegramLink: "https://t.me/GrowBot?start=cmp_xlayer_fund",
+      telegramLink: "https://t.me/GrowXlayerbot?start=cmp_xlayer_fund",
       createdAt: "Aug 05, 2026",
     },
   ];
@@ -519,7 +519,7 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
                 : "Batch Drop Distribution Engine"}
             </div>
             <p className="text-xs font-medium text-[#15121F]/60">
-              Community Telegram Claim Link: {campaign?.telegramLink || "https://t.me/GrowBot?start=cmp_xlayer1"}
+              Community Telegram Claim Link: {campaign?.telegramLink || "https://t.me/GrowXlayerbot?start=cmp_xlayer1"}
             </p>
           </div>
 
@@ -527,7 +527,7 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
             <button
               onClick={() =>
                 handleCopyText(
-                  campaign?.telegramLink || "https://t.me/GrowBot?start=cmp_xlayer1",
+                  campaign?.telegramLink || "https://t.me/GrowXlayerbot?start=cmp_xlayer1",
                   "main_link"
                 )
               }

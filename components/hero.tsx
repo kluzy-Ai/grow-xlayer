@@ -192,7 +192,7 @@ export const Hero: React.FC = () => {
                       12.50 OKB
                     </div>
                     <div className="bg-[#F4F6F0] rounded-xl px-2 py-1 flex items-center justify-between text-[9px] font-mono text-[#15121F]/70">
-                      <span className="truncate">t.me/GrowBot?start=cmp...</span>
+                      <span className="truncate">t.me/GrowXlayerbot?start=cmp...</span>
                       <Copy className="w-3 h-3 text-[#15121F]/50" />
                     </div>
                   </div>

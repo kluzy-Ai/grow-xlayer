@@ -133,7 +133,7 @@ export const CampaignCreatorModal: React.FC<CampaignCreatorModalProps> = ({
       minAmount: amountType === "random" ? Number(minAmount) : undefined,
       maxAmount: amountType === "random" ? Number(maxAmount) : undefined,
       maxSpots: Number(spots),
-      telegramLink: `https://t.me/GrowBot?start=${slug}`,
+      telegramLink: `https://t.me/GrowXlayerbot?start=${slug}`,
       createdAt: "Just now",
       status: "Active",
     };

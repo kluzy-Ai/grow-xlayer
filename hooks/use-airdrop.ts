@@ -11,7 +11,7 @@ export function useAirdrop() {
     token: "OKB",
     amountPerWallet: 0.25,
     maxSpots: 20,
-    telegramLink: "https://t.me/GrowBot?start=cmp_xlayer1",
+    telegramLink: "https://t.me/GrowXlayerbot?start=cmp_xlayer1",
     createdAt: "Aug 13, 2026",
     status: "Active",
   });

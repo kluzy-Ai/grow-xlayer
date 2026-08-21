@@ -144,7 +144,7 @@ export const AiCampaignModal: React.FC<AiCampaignModalProps> = ({
       amountType: campaign.distributionType,
       amountPerWallet: Number(campaign.rewardPerRecipient),
       maxSpots: Number(campaign.recipientCount),
-      telegramLink: `https://t.me/GrowBot?start=${slug}`,
+      telegramLink: `https://t.me/GrowXlayerbot?start=${slug}`,
       createdAt: "Just now",
       status: "Active",
     };
