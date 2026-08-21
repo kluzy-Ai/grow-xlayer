@@ -89,6 +89,54 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
     "liquidity" | "ai" | "batch"
   >("liquidity");
 
+  const [dbSubmissions, setDbSubmissions] = useState<any[]>([]);
+
+  // 1. Fetch live submissions & subscribe to Realtime updates from Supabase
+  useEffect(() => {
+    const supabase = createClient();
+
+    const fetchSubmissions = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("submissions")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (data && data.length > 0) {
+          setDbSubmissions(data);
+        }
+      } catch (err) {
+        console.warn("Supabase fetch error:", err);
+      }
+    };
+
+    fetchSubmissions();
+
+    const channel = supabase
+      .channel("submissions_realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "submissions" },
+        (payload) => {
+          if (payload.new) {
+            setDbSubmissions((prev) => [payload.new, ...prev]);
+            addSubmission({
+              id: payload.new.id || `sub_${Date.now()}`,
+              address: payload.new.wallet_address,
+              username: payload.new.telegram_handle,
+              timestamp: "Just now",
+              status: payload.new.status === "paid" ? "Paid" : "Submitted",
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   // Synchronize URL search parameters with dashboard popup modals
   useEffect(() => {
     if (modalParam === "create-campaign") {
@@ -186,10 +234,11 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
     createPlan(aiPrompt);
   };
 
-  const handleCreateCampaign = (newCamp: any) => {
+  const handleCreateCampaign = async (newCamp: any) => {
+    const supabase = createClient();
     setCampaign({
       id: newCamp.id,
-      name: newCamp.title,
+      name: newCamp.title || newCamp.name,
       token: newCamp.token as "OKB" | "USDT",
       amountPerWallet: newCamp.amountPerWallet,
       maxSpots: newCamp.maxSpots,
@@ -197,6 +246,24 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
       createdAt: newCamp.createdAt,
       status: "Active",
     });
+
+    try {
+      if (user?.id) {
+        await supabase.from("campaigns").insert([
+          {
+            creator_id: user.id,
+            title: newCamp.title || newCamp.name,
+            token_symbol: newCamp.token,
+            amount_per_claim: Number(newCamp.amountPerWallet) || 0.25,
+            total_budget: Number(newCamp.totalPool) || 0,
+            status: "active",
+            network_chain_id: 1952,
+          },
+        ]);
+      }
+    } catch (err) {
+      console.warn("Supabase campaign insert error:", err);
+    }
   };
 
   const handleTelegramSubmit = (telegramHandle: string, walletAddress: string) => {
