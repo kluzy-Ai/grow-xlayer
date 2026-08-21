@@ -30,6 +30,7 @@ import { signOutCreator } from "@/app/actions/auth";
 import { createClient } from "@/utils/supabase/client";
 import { AiCampaignModal } from "@/components/ai-campaign-modal";
 import { CampaignCreatorModal } from "./campaign-creator-modal";
+import { CampaignCreatedModal } from "./campaign-created-modal";
 import { WalletModal } from "./wallet-modal";
 import { PayoutModal } from "./payout-modal";
 import { TransactionHistoryCard } from "./transaction-history-card";
@@ -83,6 +84,8 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [isCampaignsModalOpen, setIsCampaignsModalOpen] = useState(false);
+  const [createdCampaignData, setCreatedCampaignData] = useState<any | null>(null);
+  const [isCampaignCreatedModalOpen, setIsCampaignCreatedModalOpen] = useState(false);
   const [selectedPayoutCampaign, setSelectedPayoutCampaign] = useState<any | null>(null);
   const [isPayoutModalOpen, setIsPayoutModalOpen] = useState(false);
   const [isSignOutModalOpen, setIsSignOutModalOpen] = useState(false);
@@ -285,8 +288,12 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
     const supabase = createClient();
     const campSlug = newCamp.slug || newCamp.id;
     const campTitle = newCamp.title || newCamp.name || "Grow Campaign";
+    const totalPoolValue = Number(
+      newCamp.totalPool ||
+        Number(newCamp.amountPerWallet) * Number(newCamp.maxSpots)
+    ).toFixed(2);
 
-    setCampaign({
+    const campaignRecord = {
       id: newCamp.id,
       slug: campSlug,
       name: campTitle,
@@ -294,10 +301,15 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
       token: newCamp.token as "OKB" | "USDT",
       amountPerWallet: Number(newCamp.amountPerWallet) || 0.25,
       maxSpots: Number(newCamp.maxSpots) || 20,
+      totalPool: totalPoolValue,
       telegramLink: newCamp.telegramLink || `https://t.me/GrowXlayerbot?start=${campSlug}`,
       createdAt: newCamp.createdAt || "Just now",
       status: "Active",
-    });
+    };
+
+    setCampaign(campaignRecord);
+    setCreatedCampaignData(campaignRecord);
+    setIsCampaignCreatedModalOpen(true);
 
     try {
       if (user?.id) {
@@ -317,7 +329,7 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
                 title: campTitle,
                 token_symbol: newCamp.token || "OKB",
                 amount_per_claim: Number(newCamp.amountPerWallet) || 0.25,
-                total_budget: Number(newCamp.totalPool) || 0,
+                total_budget: Number(totalPoolValue) || 0,
                 max_spots: Number(newCamp.maxSpots) || 20,
                 status: "active",
                 network_chain_id: 1952,
@@ -899,6 +911,16 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
       <WalletModal
         isOpen={isWalletModalOpen}
         onClose={() => setIsWalletModalOpen(false)}
+      />
+
+      {/* Campaign Created & Social Intent Share Modal */}
+      <CampaignCreatedModal
+        isOpen={isCampaignCreatedModalOpen}
+        onClose={() => {
+          setIsCampaignCreatedModalOpen(false);
+          setCreatedCampaignData(null);
+        }}
+        campaign={createdCampaignData}
       />
     </div>
   );
