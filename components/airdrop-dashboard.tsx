@@ -68,6 +68,15 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
     return false;
   });
 
+  useEffect(() => {
+    if (isConnected && address) {
+      setIsManuallyDisconnected(false);
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem("grow_wallet_disconnected");
+      }
+    }
+  }, [isConnected, address]);
+
   const isWalletConnected = Boolean(isConnected && address && !isManuallyDisconnected);
 
   const [isCreatorModalOpen, setIsCreatorModalOpen] = useState(false);

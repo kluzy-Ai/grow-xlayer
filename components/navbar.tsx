@@ -25,6 +25,15 @@ export const Navbar: React.FC = () => {
     return false;
   });
 
+  useEffect(() => {
+    if (isConnected && address) {
+      setIsManuallyDisconnected(false);
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem("grow_wallet_disconnected");
+      }
+    }
+  }, [isConnected, address]);
+
   const isWalletActive = Boolean(isConnected && address && !isManuallyDisconnected);
 
   useEffect(() => {
