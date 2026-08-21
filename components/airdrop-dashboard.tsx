@@ -283,35 +283,60 @@ export const AirdropDashboard: React.FC<AirdropDashboardProps> = ({ user }) => {
 
   const handleCreateCampaign = async (newCamp: any) => {
     const supabase = createClient();
+    const campSlug = newCamp.slug || newCamp.id;
+    const campTitle = newCamp.title || newCamp.name || "Grow Campaign";
+
     setCampaign({
       id: newCamp.id,
-      name: newCamp.title || newCamp.name,
+      slug: campSlug,
+      name: campTitle,
+      title: campTitle,
       token: newCamp.token as "OKB" | "USDT",
-      amountPerWallet: newCamp.amountPerWallet,
-      maxSpots: newCamp.maxSpots,
-      telegramLink: newCamp.telegramLink,
-      createdAt: newCamp.createdAt,
+      amountPerWallet: Number(newCamp.amountPerWallet) || 0.25,
+      maxSpots: Number(newCamp.maxSpots) || 20,
+      telegramLink: newCamp.telegramLink || `https://t.me/GrowXlayerbot?start=${campSlug}`,
+      createdAt: newCamp.createdAt || "Just now",
       status: "Active",
     });
 
     try {
       if (user?.id) {
-        const { data: insertedData } = await supabase.from("campaigns").insert([
-          {
-            creator_id: user.id,
-            slug: newCamp.id || newCamp.slug,
-            title: newCamp.title || newCamp.name,
-            token_symbol: newCamp.token,
-            amount_per_claim: Number(newCamp.amountPerWallet) || 0.25,
-            total_budget: Number(newCamp.totalPool) || 0,
-            max_spots: Number(newCamp.maxSpots) || 20,
-            status: "active",
-            network_chain_id: 1952,
-          },
-        ]).select().maybeSingle();
+        const { data: existing } = await supabase
+          .from("campaigns")
+          .select("*")
+          .eq("slug", campSlug)
+          .maybeSingle();
 
-        if (insertedData) {
-          setDbCampaigns((prev) => [insertedData, ...prev]);
+        if (!existing) {
+          const { data: insertedData } = await supabase
+            .from("campaigns")
+            .insert([
+              {
+                creator_id: user.id,
+                slug: campSlug,
+                title: campTitle,
+                token_symbol: newCamp.token || "OKB",
+                amount_per_claim: Number(newCamp.amountPerWallet) || 0.25,
+                total_budget: Number(newCamp.totalPool) || 0,
+                max_spots: Number(newCamp.maxSpots) || 20,
+                status: "active",
+                network_chain_id: 1952,
+              },
+            ])
+            .select()
+            .maybeSingle();
+
+          if (insertedData) {
+            setDbCampaigns((prev) => [
+              insertedData,
+              ...prev.filter((c) => c.id !== insertedData.id && c.slug !== insertedData.slug),
+            ]);
+          }
+        } else {
+          setDbCampaigns((prev) => [
+            existing,
+            ...prev.filter((c) => c.id !== existing.id && c.slug !== existing.slug),
+          ]);
         }
       }
     } catch (err) {
