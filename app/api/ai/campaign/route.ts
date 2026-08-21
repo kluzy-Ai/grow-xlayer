@@ -8,6 +8,147 @@ import {
   SUPPORTED_NETWORKS,
 } from "@/lib/ai-agent";
 
+export function parseNaturalLanguageCampaign(
+  prompt: string,
+  currentCampaign?: Partial<CampaignIntent> | null
+): {
+  campaign: CampaignIntent;
+  assistantMessage: string;
+} {
+  const p = prompt.trim();
+  const lower = p.toLowerCase();
+  const isFreshCreation =
+    lower.startsWith("create") ||
+    lower.startsWith("launch") ||
+    lower.startsWith("start") ||
+    lower.startsWith("new") ||
+    lower.startsWith("make a") ||
+    !currentCampaign ||
+    !currentCampaign.totalBudget;
+
+  // 1. Detect Token
+  let token = "OKB";
+  if (lower.includes("usdt")) token = "USDT";
+  else if (lower.includes("usdc")) token = "USDC";
+  else if (lower.includes("okb")) token = "OKB";
+  else if (!isFreshCreation && currentCampaign?.token) {
+    token = currentCampaign.token;
+  }
+
+  // 2. Extract Explicit Campaign Name / Title
+  let title = "";
+  const nameNamedMatch = p.match(/(?:named|called|title[:\s]+|titled|name[:\s]+)\s*["']?([^"',.;\n]+?)["']?(?=\s+(?:\d|\$|for|with|of|on|in|token|$))/i);
+  if (nameNamedMatch && nameNamedMatch[1]) {
+    title = nameNamedMatch[1].trim();
+  }
+
+  if (!title) {
+    if (!isFreshCreation && currentCampaign?.title && !isFreshCreation) {
+      title = currentCampaign.title;
+    } else if (lower.includes("airdrop")) {
+      title = `${token} Airdrop Growth Drop`;
+    } else if (lower.includes("giveaway")) {
+      title = `${token} Community Giveaway`;
+    } else if (lower.includes("boost") || lower.includes("liquidity")) {
+      title = `${token} Liquidity Boost`;
+    } else {
+      title = `${token} Community Campaign`;
+    }
+  }
+
+  // 3. Extract Wallet Spots / Recipient Count
+  let recipientCount = isFreshCreation ? 0 : currentCampaign?.recipientCount || 0;
+  const walletsMatch =
+    p.match(/(\d+(?:,\d+)*)\s*(?:wallets|users|recipients|winners|spots|people|claims|members|participants)/i) ||
+    p.match(/(?:for|to)\s*(\d+(?:,\d+)*)\s*(?:wallets|users|spots|people|claims)/i);
+
+  if (walletsMatch && walletsMatch[1]) {
+    recipientCount = Number(walletsMatch[1].replace(/,/g, ""));
+  }
+
+  // 4. Extract Per-Wallet Reward if explicitly specified
+  let rewardPerRecipient = isFreshCreation ? 0 : currentCampaign?.rewardPerRecipient || 0;
+  const explicitRewardMatch =
+    p.match(/(?:reward\s*(?:of|is|to)?\s*[:=]?\s*|\$|each\s*receives?\s*|get\s*|give\s*)(\d+(?:\.\d+)?)\s*(?:okb|usdt|usdc|\$|\/wallet|each|per\s*wallet|a\s*wallet)/i) ||
+    p.match(/(\d+(?:\.\d+)?)\s*(?:okb|usdt|usdc|\$)\s*(?:each|per\s*wallet|per\s*user|a\s*wallet)/i);
+
+  if (explicitRewardMatch && explicitRewardMatch[1]) {
+    rewardPerRecipient = Number(explicitRewardMatch[1]);
+  }
+
+  // 5. Extract Total Budget / Pool Amount
+  let totalBudget = isFreshCreation ? 0 : currentCampaign?.totalBudget || 0;
+  
+  // Match patterns like "0.01 OKB" or "$5,000" or "budget of 500"
+  const tokenAmountMatch = p.match(/(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:okb|usdt|usdc)/i);
+  const dollarBudgetMatch = p.match(/\$(\d+(?:,\d+)*(?:\.\d+)?)/i);
+  const budgetPrefixMatch = p.match(/(?:budget\s*(?:of|is|to)?\s*[:=]?\s*|total\s*pool\s*(?:of|is|to)?\s*[:=]?\s*)(\d+(?:,\d+)*(?:\.\d+)?)/i);
+
+  if (budgetPrefixMatch && budgetPrefixMatch[1]) {
+    totalBudget = Number(budgetPrefixMatch[1].replace(/,/g, ""));
+  } else if (dollarBudgetMatch && dollarBudgetMatch[1]) {
+    totalBudget = Number(dollarBudgetMatch[1].replace(/,/g, ""));
+  } else if (tokenAmountMatch && tokenAmountMatch[1]) {
+    // If this amount was not already captured as the per-wallet reward
+    const parsedTokenAmount = Number(tokenAmountMatch[1].replace(/,/g, ""));
+    if (!explicitRewardMatch || Math.abs(parsedTokenAmount - rewardPerRecipient) > 0.000001) {
+      totalBudget = parsedTokenAmount;
+    }
+  }
+
+  // 6. Handle Modifications (e.g., "Change reward to $10", "Make it 2,000 wallets instead")
+  if (lower.includes("change reward") || lower.includes("set reward") || lower.includes("reward to")) {
+    const numMatch = p.match(/(\d+(?:\.\d+)?)/);
+    if (numMatch) {
+      rewardPerRecipient = Number(numMatch[1]);
+      if (recipientCount > 0) {
+        totalBudget = Number((recipientCount * rewardPerRecipient).toFixed(6));
+      }
+    }
+  } else if (lower.includes("wallets instead") || lower.includes("make it") || lower.includes("set wallets")) {
+    const numMatch = p.match(/(\d+(?:,\d+)*)/);
+    if (numMatch) {
+      recipientCount = Number(numMatch[1].replace(/,/g, ""));
+      if (rewardPerRecipient > 0) {
+        totalBudget = Number((recipientCount * rewardPerRecipient).toFixed(6));
+      }
+    }
+  }
+
+  // 7. Calculate missing variable if two of the three (totalBudget, recipientCount, rewardPerRecipient) are present
+  if (totalBudget > 0 && recipientCount > 0 && rewardPerRecipient === 0) {
+    rewardPerRecipient = Number((totalBudget / recipientCount).toFixed(6));
+  } else if (recipientCount > 0 && rewardPerRecipient > 0 && totalBudget === 0) {
+    totalBudget = Number((recipientCount * rewardPerRecipient).toFixed(6));
+  } else if (totalBudget > 0 && rewardPerRecipient > 0 && recipientCount === 0) {
+    recipientCount = Math.floor(totalBudget / rewardPerRecipient);
+  }
+
+  const campaign: CampaignIntent = {
+    title,
+    description: `Natural language campaign configured for OKX X Layer`,
+    network: "OKX X Layer Testnet (Chain ID 1952)",
+    token,
+    totalBudget,
+    recipientCount,
+    rewardPerRecipient,
+    distributionType: "fixed",
+  };
+
+  let assistantMessage = "";
+  if (totalBudget > 0 && recipientCount > 0) {
+    assistantMessage = `Configured "${title}" on OKX X Layer: Total Pool ${totalBudget} ${token}, allocated for ${recipientCount} wallets (${rewardPerRecipient} ${token} per wallet).`;
+  } else if (totalBudget > 0) {
+    assistantMessage = `Set total budget to ${totalBudget} ${token}. How many recipient wallets should share this pool?`;
+  } else if (recipientCount > 0) {
+    assistantMessage = `Targeted ${recipientCount} wallets. What is the total ${token} budget or reward per wallet?`;
+  } else {
+    assistantMessage = `Updated campaign parameters. Please specify your target budget and wallet spots.`;
+  }
+
+  return { campaign, assistantMessage };
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -22,40 +163,22 @@ export async function POST(req: Request) {
 
     const apiKey = process.env.GEMINI_API_KEY;
 
-    let aiParsedCampaign: CampaignIntent = {
-      title: currentCampaign?.title || "New OKX X Layer Campaign",
-      description: currentCampaign?.description || "OKX X Layer community reward distribution",
-      network: "OKX X Layer Testnet (Chain ID 1952)",
-      token: currentCampaign?.token || "OKB",
-      totalBudget: currentCampaign?.totalBudget || 0,
-      recipientCount: currentCampaign?.recipientCount || 0,
-      rewardPerRecipient: currentCampaign?.rewardPerRecipient || 0,
-      distributionType: currentCampaign?.distributionType || "fixed",
-    };
-
+    let aiParsedCampaign: CampaignIntent | null = null;
     let assistantMessage = "";
     let isGeminiSuccess = false;
 
-    // 1. If Gemini API Key is available, use Google GenAI SDK
-    if (apiKey && apiKey !== "your_gemini_api_key_here" && !apiKey.includes("your_")) {
+    // 1. Try Gemini Generative AI if key format is standard
+    if (apiKey && apiKey.startsWith("AIzaSy") && !apiKey.includes("your_")) {
       try {
         const ai = new GoogleGenAI({ apiKey });
         const systemInstruction = `
-You are Grow Campaign Copilot, an AI assistant for the Grow Web3 campaign platform on OKX X Layer.
-Your job is to interpret natural-language campaign requests from creators and return structured campaign parameters.
-
-Strict Rules:
-1. Supported Networks: "OKX X Layer Testnet (Chain ID 1952)" or "OKX X Layer Mainnet (Chain ID 196)".
-2. Supported Tokens: "OKB", "USDT", "USDC". Default to "OKB" if unspecified.
-3. Extract:
-   - title: descriptive campaign title (e.g., "OKB Community Giveaway", "USDT Airdrop Growth Drop")
-   - totalBudget: numeric total pool amount (e.g., 500)
-   - recipientCount: numeric wallet spots (e.g., 100)
-   - rewardPerRecipient: numeric reward per wallet (e.g., 5)
-   - token: "OKB", "USDT", or "USDC"
-   - network: "OKX X Layer Testnet (Chain ID 1952)"
-   - distributionType: "fixed" or "random"
-4. Output strictly valid JSON matching this schema:
+You are Grow Campaign Copilot for OKX X Layer.
+Extract structured parameters from the user's natural language request.
+Rules:
+1. Supported Tokens: "OKB", "USDT", "USDC". Default to "OKB".
+2. Extract exact campaign title if user says "named <title>" or "called <title>".
+3. Extract totalBudget (number, supports decimals like 0.01), recipientCount (integer), rewardPerRecipient (number).
+4. Output valid JSON:
 {
   "title": "string",
   "token": "OKB" | "USDT" | "USDC",
@@ -63,150 +186,59 @@ Strict Rules:
   "recipientCount": number,
   "rewardPerRecipient": number,
   "distributionType": "fixed",
-  "assistantSummary": "short conversational response explaining what was configured or updated"
+  "assistantSummary": "short explanation"
 }
 `;
 
-        const modelsToTry = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
-        for (const modelName of modelsToTry) {
-          try {
-            const response = await ai.models.generateContent({
-              model: modelName,
-              contents: [
+        const response = await ai.models.generateContent({
+          model: "gemini-2.5-flash",
+          contents: [
+            {
+              role: "user",
+              parts: [
                 {
-                  role: "user",
-                  parts: [
-                    {
-                      text: `Current Campaign Context: ${JSON.stringify(
-                        currentCampaign || {}
-                      )}\n\nCreator Request: "${prompt}"`,
-                    },
-                  ],
+                  text: `Context: ${JSON.stringify(currentCampaign || {})}\nPrompt: "${prompt}"`,
                 },
               ],
-              config: {
-                systemInstruction,
-                responseMimeType: "application/json",
-                temperature: 0.1,
-              },
-            });
+            },
+          ],
+          config: {
+            systemInstruction,
+            responseMimeType: "application/json",
+            temperature: 0.1,
+          },
+        });
 
-            const jsonText = response.text || "";
-            if (jsonText) {
-              const parsed = JSON.parse(jsonText);
-              if (parsed.title) aiParsedCampaign.title = parsed.title;
-              if (parsed.token) aiParsedCampaign.token = parsed.token.toUpperCase();
-              if (typeof parsed.totalBudget === "number" && !isNaN(parsed.totalBudget)) {
-                aiParsedCampaign.totalBudget = Number(parsed.totalBudget);
-              }
-              if (typeof parsed.recipientCount === "number" && !isNaN(parsed.recipientCount)) {
-                aiParsedCampaign.recipientCount = Number(parsed.recipientCount);
-              }
-              if (typeof parsed.rewardPerRecipient === "number" && !isNaN(parsed.rewardPerRecipient)) {
-                aiParsedCampaign.rewardPerRecipient = Number(parsed.rewardPerRecipient);
-              }
-              if (parsed.distributionType) aiParsedCampaign.distributionType = parsed.distributionType;
-              if (parsed.assistantSummary) assistantMessage = parsed.assistantSummary;
-
-              isGeminiSuccess = true;
-              break;
-            }
-          } catch (modelErr) {
-            continue;
-          }
+        const jsonText = response.text || "";
+        if (jsonText) {
+          const parsed = JSON.parse(jsonText);
+          aiParsedCampaign = {
+            title: parsed.title || "OKX X Layer Campaign",
+            description: "Natural language campaign configured for OKX X Layer",
+            network: "OKX X Layer Testnet (Chain ID 1952)",
+            token: (parsed.token || "OKB").toUpperCase(),
+            totalBudget: Number(parsed.totalBudget) || 0,
+            recipientCount: Number(parsed.recipientCount) || 0,
+            rewardPerRecipient: Number(parsed.rewardPerRecipient) || 0,
+            distributionType: "fixed",
+          };
+          assistantMessage = parsed.assistantSummary || "";
+          isGeminiSuccess = true;
         }
       } catch (geminiErr: any) {
-        console.warn("Gemini API call warning (falling back to dynamic NLP parser):", geminiErr?.message);
+        console.warn("Gemini API call skipped/failed:", geminiErr?.message);
       }
     }
 
-    // 2. Intelligent Dynamic Rule-Based NLP Parser (Fallback)
-    if (!isGeminiSuccess) {
-      const p = prompt.toLowerCase();
-
-      // Detect Token
-      let extractedToken = currentCampaign?.token || "OKB";
-      if (p.includes("usdt")) extractedToken = "USDT";
-      else if (p.includes("usdc")) extractedToken = "USDC";
-      else if (p.includes("okb")) extractedToken = "OKB";
-
-      // Extract explicit numbers with semantic context
-      let extractedBudget = currentCampaign?.totalBudget || 0;
-      let extractedWallets = currentCampaign?.recipientCount || 0;
-      let extractedReward = currentCampaign?.rewardPerRecipient || 0;
-
-      // Match patterns like "$5,000" or "500 OKB" or "budget of 1000" or "1000 token budget"
-      const budgetMatch =
-        prompt.match(/(?:budget\s*(?:of|is|to)?\s*[:=]?\s*|\$|total\s*pool\s*(?:of|is|to)?\s*[:=]?\s*)(\d+(?:,\d+)*(?:\.\d+)?)/i) ||
-        prompt.match(/(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:okb|usdt|usdc)\s*(?:giveaway|airdrop|campaign|budget|pool)/i);
-
-      // Match patterns like "1,000 wallets" or "100 users" or "50 spots" or "200 recipients"
-      const walletsMatch =
-        prompt.match(/(\d+(?:,\d+)*)\s*(?:wallets|users|recipients|winners|spots|people|claims|members)/i) ||
-        prompt.match(/(?:for|to)\s*(\d+(?:,\d+)*)\s*(?:wallets|users|spots|people)/i);
-
-      // Match patterns like "$5 each" or "5 OKB per wallet" or "reward of 10" or "change reward to $10"
-      const rewardMatch =
-        prompt.match(/(?:reward\s*(?:to|is|of)?\s*[:=]?\s*|\$|give\s*|get\s*|each\s*receives?\s*)(\d+(?:\.\d+)?)\s*(?:okb|usdt|usdc|\$|\/wallet|each|per\s*wallet)?/i) ||
-        prompt.match(/(\d+(?:\.\d+)?)\s*(?:okb|usdt|usdc|\$)\s*(?:each|per\s*wallet|per\s*user)/i);
-
-      if (budgetMatch && budgetMatch[1]) {
-        extractedBudget = Number(budgetMatch[1].replace(/,/g, ""));
-      }
-
-      if (walletsMatch && walletsMatch[1]) {
-        extractedWallets = Number(walletsMatch[1].replace(/,/g, ""));
-      }
-
-      if (rewardMatch && rewardMatch[1]) {
-        extractedReward = Number(rewardMatch[1].replace(/,/g, ""));
-      }
-
-      // If generic numbers provided without explicit labels:
-      const allNumbers = prompt.match(/\d+(?:,\d+)*(?:\.\d+)?/g)?.map((n) => Number(n.replace(/,/g, ""))) || [];
-      if (extractedBudget === 0 && allNumbers.length >= 1) {
-        if (allNumbers[0] >= 10) extractedBudget = allNumbers[0];
-      }
-      if (extractedWallets === 0 && allNumbers.length >= 2) {
-        extractedWallets = allNumbers[1];
-      }
-      if (extractedReward === 0 && allNumbers.length >= 3) {
-        extractedReward = allNumbers[2];
-      }
-
-      // Calculate reward if budget and spots are known but reward is zero
-      if (extractedBudget > 0 && extractedWallets > 0 && extractedReward === 0) {
-        extractedReward = Number((extractedBudget / extractedWallets).toFixed(2));
-      } else if (extractedWallets > 0 && extractedReward > 0 && extractedBudget === 0) {
-        extractedBudget = Number((extractedWallets * extractedReward).toFixed(2));
-      }
-
-      // Dynamic Title
-      let title = currentCampaign?.title || `${extractedToken} Community Giveaway`;
-      if (p.includes("airdrop")) title = `${extractedToken} Airdrop Growth Drop`;
-      else if (p.includes("boost") || p.includes("liquidity")) title = `${extractedToken} Liquidity Boost`;
-      else if (p.includes("reward") || p.includes("giveaway")) title = `${extractedToken} Community Giveaway`;
-
-      aiParsedCampaign = {
-        title,
-        description: `Natural language campaign configured for OKX X Layer`,
-        network: "OKX X Layer Testnet (Chain ID 1952)",
-        token: extractedToken,
-        totalBudget: extractedBudget,
-        recipientCount: extractedWallets,
-        rewardPerRecipient: extractedReward,
-        distributionType: "fixed",
-      };
-
-      if (extractedBudget > 0 && extractedWallets > 0) {
-        assistantMessage = `I configured your ${extractedToken} campaign on OKX X Layer: Total Pool ${extractedBudget} ${extractedToken}, allocated across ${extractedWallets} recipient wallets (${extractedReward} ${extractedToken} per wallet).`;
-      } else {
-        assistantMessage = `I've updated your campaign intent. Specify total budget and recipient spots to complete the allocation.`;
-      }
+    // 2. Exact Semantic NLP Engine
+    if (!isGeminiSuccess || !aiParsedCampaign) {
+      const parsed = parseNaturalLanguageCampaign(prompt, currentCampaign);
+      aiParsedCampaign = parsed.campaign;
+      assistantMessage = parsed.assistantMessage;
     }
 
     // 3. Mathematical Validation Engine
-    const validation = validateCampaignParameters(aiParsedCampaign, 10000);
+    const validation = validateCampaignParameters(aiParsedCampaign, 100000);
 
     const missingInformation: string[] = [];
     if (!aiParsedCampaign.totalBudget) missingInformation.push("totalBudget");
@@ -221,11 +253,7 @@ Strict Rules:
 
     const responseData: AiCampaignResponse = {
       status,
-      assistantMessage:
-        assistantMessage ||
-        (validation.valid
-          ? `Campaign preview generated! Verified math: ${aiParsedCampaign.recipientCount} wallets × ${aiParsedCampaign.rewardPerRecipient} ${aiParsedCampaign.token} = ${aiParsedCampaign.totalBudget} ${aiParsedCampaign.token}.`
-          : `Validation check complete. Please review the highlighted mismatch below.`),
+      assistantMessage,
       intent: currentCampaign ? "modify_campaign" : "create_campaign",
       campaign: aiParsedCampaign,
       validation,
